@@ -1,4 +1,3 @@
-
 services:
   - type: web
     name: wake-me-when-backend
@@ -8,9 +7,7 @@ services:
     startCommand: npm start
     envVars:
       - key: MONGO_URI
-        value: your-mongo-uri-here
-      - key: JWT_SECRET
-        value: your-jwt-secret
+        value: mongodb+srv://danushriprakashsaranya:ChUyqg6MbrcmTbZZ@cluster1.m6tjv.mongodb.net/wakeme
     rootDir: .
 
   - type: web
