@@ -5,7 +5,7 @@ services:
     buildCommand: npm install
     startCommand: npm start
     envVars:
-      - key: MONGO_URI
+      - key: MONGODB_URI
         value: mongodb+srv://danushriprakashsaranya:ChUyqg6MbrcmTbZZ@cluster1.m6tjv.mongodb.net/wakeme
     rootDir: .
 
@@ -14,4 +14,4 @@ services:
     env: static
     buildCommand: npm install && npm run build
     staticPublishPath: build
-    rootDir: client
+    rootDir: .
