@@ -2888,17 +2888,23 @@ function Home() {
   };
 
   const markCompleted = (id) => {
-    axios
-      .patch(
-        `http://localhost:5000/api/${id}`,
-        { status: "Completed" },
-        { withCredentials: true }
-      )
-      .then(() => {
-        setImportantEvents((prev) => prev.filter((event) => event._id !== id));
-      })
-      .catch((err) => console.error("Error marking completed:", err));
-  };
+  setLoading(true);
+  axios
+    .put(
+      `http://localhost:5000/api/${id}`,
+      { status: "Completed" },
+      { withCredentials: true }
+    )
+    .then(() => {
+      setImportantEvents((prev) => prev.filter((event) => event._id !== id));
+    })
+    .catch((err) => {
+      console.error("Error marking completed:", err);
+      setError("Failed to mark as completed.");
+    })
+    .finally(() => setLoading(false));
+};
+
 
   const declineMeeting = (id) => {
     axios

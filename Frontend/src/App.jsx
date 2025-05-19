@@ -21,7 +21,7 @@
 
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import Config from "./Config";
+import Config from "./Config.jsx";
 import Home from "./Home";
 
 const App = () => {
