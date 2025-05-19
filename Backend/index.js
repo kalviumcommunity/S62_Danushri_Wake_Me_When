@@ -274,14 +274,20 @@ app.post("/api/save", ensureAuth, async (req, res) => {
 });
 
 // Update event status/response
-app.patch("/api/:id", ensureAuth, async (req, res) => {
+app.put("/api/:id", ensureAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const update = req.body;
+    const updatedData = req.body;
 
-    const updatedEvent = await ImportantEvent.findByIdAndUpdate(id, update, {
-      new: true,
-    });
+    console.log("Updating event ID:", id);
+    console.log("Data being updated:", updatedData);
+
+    // Update only the fields sent in updatedData (e.g., status)
+    const updatedEvent = await ImportantEvent.findByIdAndUpdate(
+      id,
+      { $set: updatedData },
+      { new: true, runValidators: true }
+    );
 
     if (!updatedEvent) {
       return res.status(404).json({ error: "Event not found" });
@@ -293,6 +299,8 @@ app.patch("/api/:id", ensureAuth, async (req, res) => {
     res.status(500).json({ error: "Failed to update event" });
   }
 });
+
+
 
 // Delete important event
 app.delete("/api/:id", ensureAuth, async (req, res) => {
