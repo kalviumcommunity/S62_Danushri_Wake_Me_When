@@ -88,6 +88,10 @@ app.get("/api/user", (req, res) => {
   res.json({ authenticated: !!req.user });
 });
 
+app.get('/', (req, res) => {
+  res.send('Wake Me When Backend is running ✅');
+});
+
 // Fetch and store important events
 app.get("/api/all-events", async (req, res) => {
   if (!req.user) return res.status(401).json({ error: "Not authenticated" });

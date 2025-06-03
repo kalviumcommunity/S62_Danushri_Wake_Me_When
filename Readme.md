@@ -8,3 +8,9 @@
   - Whether the user is listed explicitly as a required attendee (in the "To" field)
   - Whether the meeting is scheduled outside the user’s defined working hours
 - Only meetings that truly need the user’s attention are surfaced or notified, helping users stay focused and avoid alert fatigue.
+
+
+
+Frontend link - wakemewhenn.netlify.app
+
+Backend link - https://s62-danushri-wake-me-when-meqe.onrender.com
