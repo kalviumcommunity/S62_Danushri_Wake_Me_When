@@ -16,4 +16,3 @@ Frontend link - https://wakemewhen1.netlify.app/home
 Backend link - https://s62-danushri-wake-me-when-2-hvmd.onrender.com
 
 
-i just made many changes and every thing is working properly
