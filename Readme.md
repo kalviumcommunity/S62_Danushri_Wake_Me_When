@@ -11,9 +11,9 @@
 
 
 
-Frontend link - wakemewhenn.netlify.app
+Frontend link - https://wakemewhenn.netlify.app/
 
-Backend link - https://s62-danushri-wake-me-when-meqe.onrender.com
+Backend link - https://s62-danushri-wake-me-when-2-hvmd.onrender.com
 
 
-i just made many changes 
+Everything is working perfectly!!
