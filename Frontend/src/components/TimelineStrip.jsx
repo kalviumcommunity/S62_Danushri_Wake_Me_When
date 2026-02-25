@@ -80,7 +80,7 @@ export default function TimelineStrip({
           </span>
           {todayEvents.length > 0 && (
             <span style={{ fontSize: "10px", fontWeight: 700, padding: "1px 7px",
-              background: "var(--teal-light)", color: "var(--teal)", borderRadius: "5px" }}>
+              background: "#dcfce7", color: "#059669", borderRadius: "5px" }}>
               {todayEvents.length} meeting{todayEvents.length !== 1 ? "s" : ""}
             </span>
           )}
@@ -114,10 +114,10 @@ export default function TimelineStrip({
               width: `${Math.max(s.width, 1.2)}%`,
               background: s.isAfterHours
                 ? "rgba(167,139,250,0.45)"   // light purple
-                : "rgba(147,197,253,0.55)",  // light blue
+                : "rgba(187,247,208,0.55)", // light green
               borderLeft: s.isAfterHours
                 ? "2px solid rgba(139,92,246,0.6)"
-                : "2px solid rgba(59,130,246,0.5)",
+                : "2px solid rgba(5,150,105,0.5)",
               cursor: "default",
             }} />
           ))}
@@ -129,7 +129,7 @@ export default function TimelineStrip({
             <div key={i} style={{
               position: "absolute", top: "6px", bottom: 0,
               left: `${p}%`, width: "1px",
-              background: "rgba(13,148,136,0.35)",
+              background: "rgba(5,150,105,0.35)",
               pointerEvents: "none", zIndex: 1,
             }} />
           ) : null
@@ -144,8 +144,8 @@ export default function TimelineStrip({
             pointerEvents: "none", zIndex: 3,
           }}>
             <div style={{ width: "8px", height: "8px", borderRadius: "50%",
-              background: "#ef4444", boxShadow: "0 0 0 2px #fff, 0 0 0 3.5px rgba(239,68,68,.35)" }} />
-            <div style={{ width: "1.5px", height: "16px", background: "#ef4444", opacity: 0.75 }} />
+              background: "#7c3aed", boxShadow: "0 0 0 2px #fff, 0 0 0 3.5px rgba(124,58,237,.35)" }} />
+            <div style={{ width: "1.5px", height: "16px", background: "#7c3aed", opacity: 0.75 }} />
           </div>
         )}
       </div>
@@ -169,7 +169,7 @@ export default function TimelineStrip({
         <div style={{ display: "flex", gap: "14px", marginTop: "12px", flexWrap: "wrap", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
             <div style={{ width: "14px", height: "7px", borderRadius: "3px",
-              background: "rgba(147,197,253,0.55)", borderLeft: "2px solid rgba(59,130,246,0.5)" }} />
+              background: "rgba(187,247,208,0.55)", borderLeft: "2px solid rgba(5,150,105,0.5)" }} />
             <span style={{ fontSize: "10px", color: "var(--ink-4)" }}>Work hours</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
@@ -178,7 +178,7 @@ export default function TimelineStrip({
             <span style={{ fontSize: "10px", color: "var(--ink-4)" }}>After hours</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "5px", marginLeft: "auto" }}>
-            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#ef4444" }} />
+            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#7c3aed" }} />
             <span style={{ fontSize: "10px", color: "var(--ink-4)" }}>Now</span>
           </div>
         </div>

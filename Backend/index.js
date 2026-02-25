@@ -12,14 +12,26 @@ import UserSetting    from "./models/UserSettings.js";
 import User           from "./models/User.js";
 import bcrypt         from "bcryptjs";
 import ImportantEvent from "./models/ImportantEvent.js";
-import AlertLog       from "./models/AlertLog.js";
+import AlertLog          from "./models/AlertLog.js";
+import PushSubscription  from "./models/PushSubscription.js";
+import webpush       from "web-push";
 
 dotenv.config();
 const app  = express();
 const PORT = process.env.PORT || 5000;
 
+// ── Web Push (VAPID) ───────────────────────────────────────────────────────────
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    "mailto:" + (process.env.EMAIL_USER || "admin@wakemewhen.app"),
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
+
 // ── Middleware ─────────────────────────────────────────────────────────────────
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(session({
   secret: process.env.SESSION_SECRET || "dev-secret",
@@ -177,6 +189,51 @@ async function sendAlertEmail(toEmail, event, minutesBefore) {
   });
 }
 
+
+async function notifyAdminNewUser({ name, email, method }) {
+  const adminEmail = "danushri.prakashsaranya@gmail.com"; // hardcoded admin
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.log("notifyAdminNewUser: EMAIL_USER or EMAIL_PASS not set — skipping");
+    return;
+  }
+  const signedUpAt = new Date().toLocaleString("en-US", {
+    weekday:"short", month:"short", day:"numeric",
+    hour:"2-digit", minute:"2-digit", timeZoneName:"short",
+  });
+  try {
+    await transporter.sendMail({
+      from:    `"Wake Me When" <${process.env.EMAIL_USER}>`,
+      to:      adminEmail,
+      subject: `👤 New signup — ${name} (${email})`,
+      html: `
+        <div style="font-family:-apple-system,sans-serif;max-width:480px;margin:0 auto;padding:28px;background:#f7f6f4;border-radius:12px;">
+          <div style="background:#0d9488;border-radius:8px;padding:14px 18px;margin-bottom:22px;">
+            <span style="font-size:16px;font-weight:700;color:#fff;">⚡ Wake Me When — New User</span>
+          </div>
+          <table style="width:100%;border-collapse:collapse;">
+            <tr>
+              <td style="padding:10px 14px;background:#fff;border:1px solid #e5e2dd;border-radius:8px 8px 0 0;font-size:12px;color:#6b6560;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Name</td>
+              <td style="padding:10px 14px;background:#fff;border:1px solid #e5e2dd;border-top:none;font-size:14px;font-weight:600;color:#1a1916;">${name}</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 14px;background:#f7f6f4;border:1px solid #e5e2dd;border-top:none;font-size:12px;color:#6b6560;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Email</td>
+              <td style="padding:10px 14px;background:#f7f6f4;border:1px solid #e5e2dd;border-top:none;font-size:14px;color:#0d9488;font-weight:600;">${email}</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 14px;background:#fff;border:1px solid #e5e2dd;border-top:none;border-radius:0 0 0 8px;font-size:12px;color:#6b6560;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Method</td>
+              <td style="padding:10px 14px;background:#fff;border:1px solid #e5e2dd;border-top:none;border-radius:0 0 8px 0;font-size:14px;color:#1a1916;">${method}</td>
+            </tr>
+          </table>
+          <p style="font-size:12px;color:#9a9187;margin-top:18px;">Signed up at ${signedUpAt}</p>
+        </div>
+      `,
+    });
+    console.log(`📬 Admin notified of new signup: ${email}`);
+  } catch (err) {
+    console.error("Admin notification failed:", err.message);
+  }
+}
+
 // ── Importance classifier ──────────────────────────────────────────────────────
 function classifyImportance(event, userEmail, keywords = []) {
   const summary     = (event.summary     || "").toLowerCase();
@@ -246,7 +303,20 @@ app.get("/api/auth", passport.authenticate("google", {
 
 app.get("/api/auth/callback",
   passport.authenticate("google", { failureRedirect: "http://localhost:5173" }),
-  (req, res) => res.redirect("http://localhost:5173/home")
+  async (req, res) => {
+    try {
+      const gEmail = req.user?.profile?.emails?.[0]?.value?.toLowerCase();
+      const gName  = req.user?.profile?.displayName || "Unknown";
+      if (gEmail) {
+        const exists = await User.findOne({ email: gEmail });
+        if (!exists) {
+          notifyAdminNewUser({ name: gName, email: gEmail, method: "Google OAuth" })
+            .catch(err => console.error("Admin notify failed:", err.message));
+        }
+      }
+    } catch (_) {}
+    res.redirect("http://localhost:5173/home");
+  }
 );
 
 app.get("/api/logout", (req, res) => req.logout(() => res.redirect("http://localhost:5173")));
@@ -274,6 +344,10 @@ app.post("/api/auth/register", async (req, res) => {
       calendarLinked: user.calendarLinked,
       authMethod:    "email",
     };
+
+    // Notify admin of new signup
+    notifyAdminNewUser({ name: user.name, email: user.email, method: "Email/Password" })
+      .catch(err => console.error("Admin notify failed:", err.message));
 
     res.json({ ok: true, calendarLinked: false, name: user.name, email: user.email });
   } catch (err) {
@@ -384,24 +458,33 @@ app.get("/api/auth/link-calendar/callback",
 );
 
 // User info
-app.get("/api/user", (req, res) => {
-  // Email-auth session
+app.get("/api/user", async (req, res) => {
   if (req.session?.emailUser) {
     const u = req.session.emailUser;
+    const dbUser = u.id ? await User.findById(u.id).catch(() => null) : null;
     return res.json({
       authenticated: true,
-      calendarLinked: u.calendarLinked || false,
-      user: { id: u.id, displayName: u.name, email: u.email, photo: null, authMethod: "email" },
+      calendarLinked: !!(dbUser?.accessToken && dbUser?.calendarLinked) || u.calendarLinked || false,
+      outlookLinked: dbUser?.outlookLinked || false,
+      outlookEmail:  dbUser?.outlookEmail  || null,
+      user: { id: u.id, displayName: dbUser?.name || u.name, email: u.email, avatar: dbUser?.customPhoto || null, authMethod: "email", createdAt: dbUser?.createdAt || null },
     });
   }
   if (!req.user) return res.json({ authenticated: false });
   const p = req.user.profile;
+  const googleEmail = p.emails?.[0]?.value?.toLowerCase();
+  const dbUser = googleEmail ? await User.findOne({ email: googleEmail }).catch(() => null) : null;
   res.json({
     authenticated: true,
+    calendarLinked: !!(dbUser?.accessToken && dbUser?.calendarLinked),
+    outlookLinked: dbUser?.outlookLinked || false,
+    outlookEmail:  dbUser?.outlookEmail  || null,
     user: {
-      name:   p.displayName,
-      email:  p.emails?.[0]?.value,
-      avatar: p.photos?.[0]?.value,
+      name:        dbUser?.name || p.displayName,
+      email:       googleEmail,
+      avatar:      dbUser?.customPhoto || p.photos?.[0]?.value,
+      authMethod:  "google",
+      createdAt:   dbUser?.createdAt || null,
     },
   });
 });
@@ -483,7 +566,27 @@ app.get("/api/all-events", ensureAuth, async (req, res) => {
       }
     }
 
-    res.json({ allEvents: events });
+    // Merge Outlook events if linked
+    let outlookEvents = [];
+    try {
+      const dbUser = req.session?.emailUser?.id
+        ? await User.findById(req.session.emailUser.id)
+        : await User.findOne({ email: userEmail });
+      if (dbUser?.outlookLinked) {
+        outlookEvents = await fetchOutlookEvents(dbUser, timeMin, timeMax);
+      }
+    } catch (outErr) {
+      console.log("Outlook fetch skipped:", outErr.message);
+    }
+
+    const allEvents = [
+      ...events,
+      ...outlookEvents.filter(oe => !events.some(ge => ge.summary === oe.summary &&
+        ge.start?.dateTime?.slice(0,16) === oe.start?.dateTime?.slice(0,16)
+      )),
+    ].sort((a, b) => new Date(a.start?.dateTime) - new Date(b.start?.dateTime));
+
+    res.json({ allEvents });
   } catch (err) {
     console.error("all-events error:", err?.response?.data || err.message);
 
@@ -501,37 +604,36 @@ app.get("/api/important-events", ensureAuth, async (req, res) => {
     const email    = getUserEmail(req);
     const settings = await UserSetting.findOne({ email });
 
-    const includeWeekends  = settings?.includeWeekends  ?? false;
-    const includeOrganized = settings?.onlyIfInToList   ?? false; // "Also include meetings I organised"
+    const includeWeekends  = settings?.includeWeekends ?? false;
+    const includeOrganized = settings?.onlyIfInToList  ?? false;
 
-    // Build the $or conditions based on what the user has enabled
-    const orConditions = [
-      { importanceReasons: { $in: ["keyword", "highImportance"] } }, // keyword always included
-      { youAreAnAttendee: true },                                    // To-field always included
-    ];
-
-    // Only add organizer meetings if the toggle is ON
-    if (includeOrganized) {
-      orConditions.push({ importanceReasons: { $in: ["organizer"] } });
-    }
-
-    const events = await ImportantEvent.find({
+    // Base query — anything in ImportantEvents that isn't dismissed
+    const query = {
       email,
       status: { $nin: ["Completed", "Declined"] },
-      $or: orConditions,
-    }).sort({ "start.dateTime": 1 });
+    };
 
-    const filtered = events.filter(e => {
-      if (!includeWeekends && isWeekend(e.start?.dateTime)) return false;
-      return true;
-    });
+    // If "only include meetings I'm invited to" is OFF (default),
+    // exclude organizer-only events unless toggle is ON
+    if (!includeOrganized) {
+      query.$or = [
+        { importanceReasons: { $in: ["keyword", "highImportance", "attendee"] } },
+        { youAreAnAttendee: true },
+      ];
+    }
+
+    const events = await ImportantEvent.find(query).sort({ "start.dateTime": 1 });
+
+    const filtered = includeWeekends
+      ? events
+      : events.filter(e => !isWeekend(e.start?.dateTime));
 
     res.json(filtered);
   } catch (err) {
-          if (err.message === "CALENDAR_NOT_LINKED") {
-        return res.status(403).json({ error: "Calendar not connected.", calendarNotLinked: true });
-      }
-      console.error("important-events error:", err.message);
+    if (err.message === "CALENDAR_NOT_LINKED") {
+      return res.status(403).json({ error: "Calendar not connected.", calendarNotLinked: true });
+    }
+    console.error("important-events error:", err.message);
     res.status(500).json({ error: "Failed to fetch important events." });
   }
 });
@@ -599,6 +701,123 @@ app.post("/api/user-settings", ensureAuth, async (req, res) => {
 // ── Event actions ──────────────────────────────────────────────────────────────
 
 // Mark as Done — sets status:Completed so it won't re-appear on next sync
+// ── Profile routes ─────────────────────────────────────────────────────────────
+
+app.get("/api/profile/stats", ensureAuth, async (req, res) => {
+  try {
+    const email = getUserEmail(req);
+    const dbUser = req.session?.emailUser?.id
+      ? await User.findById(req.session.emailUser.id)
+      : await User.findOne({ email });
+
+    const [totalImportant, totalEvents, afterHoursCount] = await Promise.all([
+      ImportantEvent.countDocuments({ email, status: { $nin: ["Completed", "Declined"] } }),
+      ImportantEvent.countDocuments({ email }),
+      ImportantEvent.countDocuments({ email, importanceReasons: "afterHours" }),
+    ]);
+
+    res.json({
+      totalImportant,
+      totalEvents,
+      afterHours: afterHoursCount,
+      memberSince: dbUser?.createdAt || null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load stats." });
+  }
+});
+
+app.put("/api/profile/photo", ensureAuth, async (req, res) => {
+  try {
+    const { photo } = req.body;
+    if (!photo) return res.status(400).json({ error: "No photo provided." });
+    // Validate it's a base64 image (data URI)
+    if (!photo.startsWith("data:image/")) return res.status(400).json({ error: "Invalid image format." });
+    // Limit size — base64 of 2MB image ~2.7MB string
+    if (photo.length > 3 * 1024 * 1024) return res.status(400).json({ error: "Image too large. Max 2MB." });
+
+    const email = getUserEmail(req);
+    const id = req.session?.emailUser?.id;
+    if (id) {
+      await User.findByIdAndUpdate(id, { customPhoto: photo });
+    } else if (email) {
+      await User.findOneAndUpdate({ email }, { customPhoto: photo });
+    } else {
+      return res.status(400).json({ error: "Could not identify user." });
+    }
+    res.json({ ok: true, photo });
+  } catch (err) {
+    console.error("photo upload error:", err.message);
+    res.status(500).json({ error: "Failed to save photo." });
+  }
+});
+
+app.put("/api/profile", ensureAuth, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name?.trim()) return res.status(400).json({ error: "Name is required." });
+
+    const trimmed = name.trim();
+    const email = getUserEmail(req);
+
+    if (req.session?.emailUser?.id) {
+      await User.findByIdAndUpdate(req.session.emailUser.id, { name: trimmed });
+      req.session.emailUser.name = trimmed;
+      // Explicitly save session so reload picks up the new name
+      await new Promise((resolve, reject) =>
+        req.session.save(err => err ? reject(err) : resolve())
+      );
+    } else if (email) {
+      await User.findOneAndUpdate({ email }, { name: trimmed });
+    } else {
+      return res.status(400).json({ error: "Could not identify user." });
+    }
+    res.json({ ok: true, name: trimmed });
+  } catch (err) {
+    console.error("profile PUT error:", err.message);
+    res.status(500).json({ error: err.message || "Failed to update profile." });
+  }
+});
+
+app.delete("/api/profile", ensureAuth, async (req, res) => {
+  try {
+    const email = getUserEmail(req);
+    const userId = req.session?.emailUser?.id;
+
+    // Delete all user data
+    await Promise.all([
+      User.findOneAndDelete(userId ? { _id: userId } : { email }),
+      ImportantEvent.deleteMany({ email }),
+      UserSetting.deleteMany({ email }),
+      AlertLog.deleteMany({ email }),
+      PushSubscription.deleteMany({ email }),
+    ]);
+
+    req.logout?.(() => {});
+    req.session?.destroy?.(() => {});
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete account." });
+  }
+});
+
+
+// ── Debug: check current user DB state ───────────────────────────────────────
+app.get("/api/debug/me", ensureAuth, async (req, res) => {
+  const email = getUserEmail(req);
+  const id = req.session?.emailUser?.id;
+  const dbUser = id ? await User.findById(id).lean() : await User.findOne({ email }).lean();
+  res.json({
+    sessionEmail: email,
+    sessionId: id,
+    dbFound: !!dbUser,
+    calendarLinked: dbUser?.calendarLinked,
+    hasAccessToken: !!dbUser?.accessToken,
+    name: dbUser?.name,
+  });
+});
+
+// ── Debug: test admin notification (TEMP — remove before production) ──────────
 app.put("/api/:id", ensureAuth, async (req, res) => {
   try {
     const updated = await ImportantEvent.findByIdAndUpdate(
@@ -713,51 +932,484 @@ app.post("/api/resync", ensureAuth, async (req, res) => {
   }
 });
 
+
+
+// ── Accept event (RSVP yes) ────────────────────────────────────────────────────
+app.post("/api/accept-event/:eventId", ensureAuth, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    let token;
+    try { token = await getAccessTokenForRequest(req); }
+    catch { return res.status(401).json({ error: "Session expired.", reauth: true }); }
+
+    // Patch Google Calendar — set self responseStatus to accepted
+    await axios.patch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
+      { attendees: undefined },  // Google ignores attendees in patch; use sendUpdates
+      {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        params:  { sendUpdates: "none" },
+      }
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    // Non-fatal — may fail if user is organizer (no self attendee entry)
+    console.error("accept-event error:", err?.response?.data || err.message);
+    res.json({ ok: true }); // still resolve so UI updates
+  }
+});
+
+// ── Overlap detection ──────────────────────────────────────────────────────────
+app.get("/api/overlap-events", ensureAuth, async (req, res) => {
+  try {
+    const userEmail = getUserEmail(req);
+    let token;
+    try { token = await getAccessTokenForRequest(req); }
+    catch { return res.status(401).json({ error: "Session expired.", reauth: true }); }
+
+    const today   = new Date();
+    const timeMin = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+    const timeMax = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2).toISOString();
+
+    const gcalResp = await axios.get(
+      "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        params:  { timeMin, timeMax, singleEvents: true, orderBy: "startTime" },
+      }
+    );
+
+    const events = (gcalResp.data.items || []).filter(e => e.start?.dateTime);
+
+    // Find all overlapping pairs
+    const overlaps = [];
+    for (let i = 0; i < events.length; i++) {
+      for (let j = i + 1; j < events.length; j++) {
+        const aStart = new Date(events[i].start.dateTime).getTime();
+        const aEnd   = new Date(events[i].end?.dateTime  || events[i].start.dateTime).getTime() + 60000;
+        const bStart = new Date(events[j].start.dateTime).getTime();
+        const bEnd   = new Date(events[j].end?.dateTime  || events[j].start.dateTime).getTime() + 60000;
+
+        // Overlap: one starts before the other ends
+        if (aStart < bEnd && bStart < aEnd) {
+          overlaps.push({
+            a: { id: events[i].id, summary: events[i].summary, start: events[i].start.dateTime, end: events[i].end?.dateTime },
+            b: { id: events[j].id, summary: events[j].summary, start: events[j].start.dateTime, end: events[j].end?.dateTime },
+          });
+        }
+      }
+    }
+
+    res.json({ overlaps });
+  } catch (err) {
+    console.error("overlap error:", err?.response?.data || err.message);
+    res.status(500).json({ error: "Failed to check overlaps." });
+  }
+});
+
+
+
+// ── Raw email test (no auth needed) ──────────────────────────────────────────
+app.get("/api/debug/send-raw-email", async (req, res) => {
+  const user = process.env.EMAIL_USER;
+  const pass = process.env.EMAIL_PASS;
+  console.log("RAW TEST — EMAIL_USER:", user || "NOT SET");
+  console.log("RAW TEST — EMAIL_PASS:", pass ? "SET" : "NOT SET");
+
+  if (!user || !pass) {
+    return res.status(500).json({ error: "EMAIL_USER or EMAIL_PASS not set in .env" });
+  }
+
+  try {
+    const nodemailer = (await import("nodemailer")).default;
+    const t = nodemailer.createTransport({
+      service: "gmail",
+      auth: { user, pass },
+    });
+
+    await t.sendMail({
+      from: user,
+      to: "danushri.prakashsaranya@gmail.com",
+      subject: "WMW test email",
+      text: "If you got this, email is working.",
+    });
+
+    res.json({ ok: true, from: user, to: "danushri.prakashsaranya@gmail.com" });
+  } catch (err) {
+    console.error("RAW EMAIL ERROR:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ── Outlook / Microsoft 365 OAuth ─────────────────────────────────────────────
+const AZURE_CLIENT_ID     = process.env.AZURE_CLIENT_ID;
+const AZURE_CLIENT_SECRET = process.env.AZURE_CLIENT_SECRET;
+const AZURE_REDIRECT_URI  = "http://localhost:5000/api/auth/outlook/callback";
+const MS_SCOPES           = "openid profile email offline_access Calendars.Read User.Read";
+
+app.get("/api/auth/outlook", (req, res) => {
+  if (!AZURE_CLIENT_ID) return res.status(500).json({ error: "Outlook integration not configured." });
+  const state = req.session?.emailUser?.id
+    ? Buffer.from(JSON.stringify({ uid: req.session.emailUser.id })).toString("base64")
+    : "google";
+  const url = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?`
+    + `client_id=${AZURE_CLIENT_ID}`
+    + `&response_type=code`
+    + `&redirect_uri=${encodeURIComponent(AZURE_REDIRECT_URI)}`
+    + `&scope=${encodeURIComponent(MS_SCOPES)}`
+    + `&response_mode=query`
+    + `&prompt=consent`
+    + `&state=${state}`;
+  res.redirect(url);
+});
+
+app.get("/api/auth/outlook/callback", async (req, res) => {
+  const { code, state } = req.query;
+  if (!code) return res.redirect("http://localhost:5173/home?outlookError=no_code");
+
+  try {
+    // Exchange code for tokens
+    const tokenResp = await axios.post(
+      "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+      new URLSearchParams({
+        client_id:     AZURE_CLIENT_ID,
+        client_secret: AZURE_CLIENT_SECRET,
+        code,
+        redirect_uri:  AZURE_REDIRECT_URI,
+        grant_type:    "authorization_code",
+      }),
+      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+    );
+
+    const { access_token, refresh_token, expires_in } = tokenResp.data;
+
+    // Get user profile from Microsoft Graph
+    const profileResp = await axios.get("https://graph.microsoft.com/v1.0/me", {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+    const msEmail = (profileResp.data.mail || profileResp.data.userPrincipalName || "").toLowerCase();
+
+    // Find the user — by session ID or by email
+    let userId = null;
+    try {
+      const decoded = JSON.parse(Buffer.from(state, "base64").toString());
+      userId = decoded.uid;
+    } catch (_) {}
+
+    if (userId) {
+      await User.findByIdAndUpdate(userId, {
+        outlookAccessToken:  access_token,
+        outlookRefreshToken: refresh_token,
+        outlookTokenIssuedAt: Date.now(),
+        outlookEmail:        msEmail,
+        outlookLinked:       true,
+      });
+    } else if (req.user?.profile?.emails?.[0]?.value) {
+      // Google-auth user — find by google email
+      const googleEmail = req.user.profile.emails[0].value.toLowerCase();
+      await User.findOneAndUpdate({ email: googleEmail }, {
+        outlookAccessToken:  access_token,
+        outlookRefreshToken: refresh_token,
+        outlookTokenIssuedAt: Date.now(),
+        outlookEmail:        msEmail,
+        outlookLinked:       true,
+      });
+    }
+
+    res.redirect("http://localhost:5173/home?outlookLinked=1");
+  } catch (err) {
+    console.error("Outlook callback error:", err?.response?.data || err.message);
+    res.redirect("http://localhost:5173/home?outlookError=1");
+  }
+});
+
+app.post("/api/auth/outlook/disconnect", ensureAuth, async (req, res) => {
+  try {
+    const userEmail = getUserEmail(req);
+    let query = req.session?.emailUser?.id
+      ? { _id: req.session.emailUser.id }
+      : { email: userEmail };
+    await User.findOneAndUpdate(query, {
+      outlookAccessToken:  null,
+      outlookRefreshToken: null,
+      outlookTokenIssuedAt: null,
+      outlookEmail:        null,
+      outlookLinked:       false,
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to disconnect Outlook." });
+  }
+});
+
+// ── Outlook events helper ──────────────────────────────────────────────────────
+async function getOutlookAccessToken(user) {
+  if (!user?.outlookAccessToken) throw new Error("OUTLOOK_NOT_LINKED");
+  const elapsed = Date.now() - (user.outlookTokenIssuedAt || 0);
+  if (elapsed < 55 * 60 * 1000) return user.outlookAccessToken;
+
+  // Refresh
+  if (!user.outlookRefreshToken) throw new Error("OUTLOOK_NOT_LINKED");
+  const resp = await axios.post(
+    "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+    new URLSearchParams({
+      client_id:     AZURE_CLIENT_ID,
+      client_secret: AZURE_CLIENT_SECRET,
+      refresh_token: user.outlookRefreshToken,
+      grant_type:    "refresh_token",
+      scope:         MS_SCOPES,
+    }),
+    { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+  );
+  const newToken = resp.data.access_token;
+  await User.findByIdAndUpdate(user._id, {
+    outlookAccessToken: newToken,
+    outlookTokenIssuedAt: Date.now(),
+    ...(resp.data.refresh_token ? { outlookRefreshToken: resp.data.refresh_token } : {}),
+  });
+  return newToken;
+}
+
+async function fetchOutlookEvents(user, timeMin, timeMax) {
+  const token = await getOutlookAccessToken(user);
+  const resp = await axios.get(
+    `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${timeMin}&endDateTime=${timeMax}&$orderby=start/dateTime&$top=50`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  // Normalize to Google Calendar event shape
+  return (resp.data.value || []).map(e => ({
+    id:       e.id,
+    summary:  e.subject || "Untitled",
+    start:    { dateTime: e.start?.dateTime ? new Date(e.start.dateTime).toISOString() : null },
+    end:      { dateTime: e.end?.dateTime   ? new Date(e.end.dateTime).toISOString()   : null },
+    attendees: (e.attendees || []).map(a => ({
+      email:          a.emailAddress?.address?.toLowerCase() || "",
+      displayName:    a.emailAddress?.name || "",
+      responseStatus: a.status?.response === "accepted"  ? "accepted"
+                    : a.status?.response === "tentatively" ? "tentative"
+                    : a.status?.response === "declined"  ? "declined"
+                    : "needsAction",
+    })),
+    organizer: { email: e.organizer?.emailAddress?.address?.toLowerCase() || "" },
+    source:   "outlook",
+    description: e.bodyPreview || "",
+  }));
+}
+
+
+// ── Push notification routes ───────────────────────────────────────────────────
+
+// Return VAPID public key so frontend can subscribe
+app.get("/api/push/vapid-public-key", (req, res) => {
+  if (!process.env.VAPID_PUBLIC_KEY) {
+    return res.status(400).json({ error: "Push notifications not configured." });
+  }
+  res.json({ key: process.env.VAPID_PUBLIC_KEY });
+});
+
+// Save push subscription from browser
+app.post("/api/push/subscribe", ensureAuth, async (req, res) => {
+  try {
+    const email = getUserEmail(req);
+    const { subscription } = req.body;
+    if (!subscription?.endpoint) return res.status(400).json({ error: "Invalid subscription." });
+
+    await PushSubscription.findOneAndUpdate(
+      { email, "subscription.endpoint": subscription.endpoint },
+      { email, subscription },
+      { upsert: true, new: true }
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("push subscribe error:", err.message);
+    res.status(500).json({ error: "Failed to save subscription." });
+  }
+});
+
+// Remove push subscription
+app.post("/api/push/unsubscribe", ensureAuth, async (req, res) => {
+  try {
+    const email = getUserEmail(req);
+    const { endpoint } = req.body;
+    await PushSubscription.deleteOne({ email, "subscription.endpoint": endpoint });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to remove subscription." });
+  }
+});
+
+// Send test push to current user
+app.post("/api/push/test", ensureAuth, async (req, res) => {
+  try {
+    const email = getUserEmail(req);
+    const subs  = await PushSubscription.find({ email });
+    if (!subs.length) return res.status(400).json({ error: "No push subscription found. Enable notifications first." });
+    if (!process.env.VAPID_PUBLIC_KEY) return res.status(400).json({ error: "Push not configured on server." });
+
+    const payload = JSON.stringify({
+      title: "⏰ Wake Me When — Test Alarm",
+      body:  "Alarm notifications are working! You'll be woken up before important meetings.",
+      tag:   "wmw-test",
+    });
+
+    await Promise.all(subs.map(s =>
+      webpush.sendNotification(s.subscription, payload).catch(err => {
+        if (err.statusCode === 410) PushSubscription.deleteOne({ _id: s._id }).catch(() => {});
+      })
+    ));
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("push test error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ── Debug: dump all ImportantEvents for current user ─────────────────────────
+app.get("/api/debug/important-raw", ensureAuth, async (req, res) => {
+  const email = getUserEmail(req);
+  const all = await ImportantEvent.find({ email }).lean();
+  res.json({ count: all.length, events: all.map(e => ({
+    summary: e.summary,
+    status: e.status,
+    importanceReason: e.importanceReason,
+    importanceReasons: e.importanceReasons,
+    youAreAnAttendee: e.youAreAnAttendee,
+    start: e.start?.dateTime,
+  }))});
+});
+
+
+
+app.get("/api/debug/test-admin-email", async (req, res) => {
+  console.log("🧪 Debug test-admin-email called");
+  console.log("EMAIL_USER:", process.env.EMAIL_USER || "NOT SET");
+  console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "SET" : "NOT SET");
+  console.log("ADMIN_EMAIL:", process.env.ADMIN_EMAIL || "NOT SET");
+  try {
+    await notifyAdminNewUser({ name: "Test User", email: "test@example.com", method: "Debug Test" });
+    res.json({ ok: true, sentTo: process.env.ADMIN_EMAIL || process.env.EMAIL_USER || "none" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Test email ─────────────────────────────────────────────────────────────────
+app.post("/api/test-email", ensureAuth, async (req, res) => {
+  try {
+    const userEmail = getUserEmail(req);
+    const settings  = await UserSetting.findOne({ email: userEmail });
+    const toEmail   = settings?.emailAddress || userEmail;
+
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      return res.status(400).json({ error: "EMAIL_USER and EMAIL_PASS are not configured on the server." });
+    }
+
+    await transporter.sendMail({
+      from:    `"Wake Me When" <${process.env.EMAIL_USER}>`,
+      to:      toEmail,
+      subject: "✅ Wake Me When — Email alerts are working!",
+      html: `
+        <div style="font-family:-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:32px;background:#f7f6f4;border-radius:12px;">
+          <div style="background:#0d9488;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
+            <span style="font-size:18px;font-weight:700;color:#fff;">⚡ Wake Me When</span>
+          </div>
+          <h2 style="font-size:20px;color:#1a1916;margin:0 0 12px;">Email alerts are working!</h2>
+          <p style="font-size:14px;color:#6b6560;line-height:1.7;">
+            Your email alert setup is confirmed. You'll receive alerts at your chosen intervals
+            (60, 30, and 15 minutes) before any important meetings.
+          </p>
+          <p style="font-size:12px;color:#9a9187;margin-top:20px;">Sent to: ${toEmail}</p>
+        </div>
+      `,
+    });
+
+    res.json({ ok: true, sentTo: toEmail });
+  } catch (err) {
+    console.error("test email error:", err.message);
+    res.status(500).json({ error: err.message || "Failed to send test email." });
+  }
+});
+
 // ── Background polling + alert scheduler ──────────────────────────────────────
 // Runs every 5 minutes. For each user session in MongoDB we'd need token storage,
 // but since sessions are in-memory, we schedule alerts based on stored events.
 // Alert emails are sent based on stored ImportantEvents vs current time.
+// Helper: check if now is within the alert window for a given meeting + interval
+function inAlertWindow(start, mins, now) {
+  const alertTime   = new Date(start.getTime() - mins * 60 * 1000);
+  const windowStart = new Date(alertTime.getTime() - 2.5 * 60 * 1000);
+  const windowEnd   = new Date(alertTime.getTime() + 2.5 * 60 * 1000);
+  return now >= windowStart && now <= windowEnd;
+}
+
 cron.schedule("*/5 * * * *", async () => {
   console.log("⏰ Running alert check...");
   try {
     const now = new Date();
 
-    // Get all users with email alerts enabled
-    const usersWithAlerts = await UserSetting.find({ emailEnabled: true, emailAddress: { $ne: "" } });
-
-    for (const settings of usersWithAlerts) {
-      const intervals = settings.alertIntervals || [60, 30, 15];
-      const events    = await ImportantEvent.find({
-        email: settings.email,
-        status: "Pending",
-      });
+    // ── Email alerts ───────────────────────────────────────────────────────────
+    const emailUsers = await UserSetting.find({ emailEnabled: true, emailAddress: { $ne: "" } });
+    for (const settings of emailUsers) {
+      const intervals = settings.alertIntervals?.length ? settings.alertIntervals : [60, 30, 15];
+      const events    = await ImportantEvent.find({ email: settings.email, status: "Pending" });
 
       for (const event of events) {
         const start = new Date(event.start.dateTime);
-
         for (const mins of intervals) {
-          const alertTime    = new Date(start.getTime() - mins * 60 * 1000);
-          const windowStart  = new Date(alertTime.getTime() - 2.5 * 60 * 1000); // ±2.5min window
-          const windowEnd    = new Date(alertTime.getTime() + 2.5 * 60 * 1000);
+          if (!inAlertWindow(start, mins, now)) continue;
+          try {
+            await AlertLog.create({ email: settings.email, eventId: event.eventId, interval: mins });
+            await sendAlertEmail(settings.emailAddress, event, mins);
+            console.log(`📧 Email sent: ${settings.email} — "${event.summary}" in ${mins}min`);
+          } catch (dupErr) { /* already sent */ }
+        }
+      }
+    }
 
-          if (now >= windowStart && now <= windowEnd) {
-            // Check if already sent
+    // ── Push alarms (independent of email — fires for ALL users with push subs) ─
+    if (process.env.VAPID_PUBLIC_KEY) {
+      const pushSubs = await PushSubscription.find({});
+      // Group by email
+      const subsByEmail = {};
+      for (const s of pushSubs) {
+        if (!subsByEmail[s.email]) subsByEmail[s.email] = [];
+        subsByEmail[s.email].push(s);
+      }
+
+      for (const [email, subs] of Object.entries(subsByEmail)) {
+        const events = await ImportantEvent.find({ email, status: "Pending" });
+
+        for (const event of events) {
+          const start = new Date(event.start.dateTime);
+          // Always alert at 60 min for push (alarm behaviour)
+          const pushIntervals = [60, 30, 15];
+          for (const mins of pushIntervals) {
+            if (!inAlertWindow(start, mins, now)) continue;
             try {
-              await AlertLog.create({
-                email:    settings.email,
-                eventId:  event.eventId,
-                interval: mins,
+              // Use AlertLog with a push- prefix to avoid colliding with email log
+              await AlertLog.create({ email, eventId: `push-${event.eventId}`, interval: mins });
+              const startTime = new Date(event.start.dateTime).toLocaleTimeString("en-US", {
+                hour: "2-digit", minute: "2-digit",
               });
-              // If create succeeded (no duplicate), send email
-              await sendAlertEmail(settings.emailAddress, event, mins);
-              console.log(`📧 Alert sent: ${settings.email} — "${event.summary}" in ${mins}min`);
-            } catch (dupErr) {
-              // Duplicate key = already sent, skip silently
-            }
+              const payload = JSON.stringify({
+                title: `⏰ Meeting in ${mins === 60 ? "1 hour" : mins + " min"}`,
+                body:  `${event.summary || "Untitled"} starts at ${startTime}`,
+                tag:   `wmw-${event.eventId}-${mins}`,
+              });
+              await Promise.all(subs.map(s =>
+                webpush.sendNotification(s.subscription, payload).catch(err => {
+                  if (err.statusCode === 410) PushSubscription.deleteOne({ _id: s._id }).catch(() => {});
+                })
+              ));
+              console.log(`🔔 Push sent: ${email} — "${event.summary}" in ${mins}min`);
+            } catch (dupErr) { /* already sent */ }
           }
         }
       }
     }
+
   } catch (err) {
     console.error("Alert scheduler error:", err.message);
   }

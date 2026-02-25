@@ -17,8 +17,16 @@ const userSchema = new mongoose.Schema({
   tokenIssuedAt:   { type: Number, default: null },
   calendarLinked:  { type: Boolean, default: false },
 
+  // Outlook / Microsoft 365 tokens
+  outlookAccessToken:   { type: String, default: null },
+  outlookRefreshToken:  { type: String, default: null },
+  outlookTokenIssuedAt: { type: Number, default: null },
+  outlookEmail:         { type: String, default: null },
+  outlookLinked:        { type: Boolean, default: false },
+
   // Profile
   photo:        { type: String, default: null },
+  customPhoto:  { type: String, default: null },  // user-uploaded, overrides Google photo
 
   createdAt:    { type: Date, default: Date.now },
 });

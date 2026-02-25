@@ -1,5 +1,3 @@
-
-
 import axios from "axios";
 
 const API = axios.create({
@@ -12,12 +10,17 @@ const API = axios.create({
   },
 });
 
-// On 401 with reauth flag → bounce back to Google login
+// On 401 → bounce back to login
 API.interceptors.response.use(
   res => res,
   err => {
-    if (err.response?.status === 401 && err.response?.data?.reauth) {
-      window.location.href = "http://localhost:5000/api/auth";
+    if (err.response?.status === 401) {
+      const url = window.location.pathname;
+      if (!url.includes("/login") && !url.includes("/signup")) {
+        window.location.href = err.response?.data?.reauth
+          ? "http://localhost:5000/api/auth"
+          : "/login";
+      }
     }
     return Promise.reject(err);
   }

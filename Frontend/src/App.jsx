@@ -7,6 +7,7 @@ import Config           from "./Config";
 import Login            from "./pages/Login";
 import Signup           from "./pages/Signup";
 import ConnectCalendar  from "./pages/ConnectCalendar";
+import Profile          from "./pages/Profile";
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/important"         element={<ImportantPage />} />
         <Route path="/afterhours"        element={<AfterHoursPage />} />
         <Route path="/config"            element={<Config />} />
+        <Route path="/profile"           element={<Profile />} />
       </Routes>
     </Router>
   );
