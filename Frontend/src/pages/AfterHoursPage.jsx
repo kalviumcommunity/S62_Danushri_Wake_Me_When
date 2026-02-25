@@ -110,7 +110,7 @@ const AfterHoursPage = () => {
           <a href="/connect-calendar" style={{
             padding:"8px 16px", borderRadius:"9px", textDecoration:"none",
             fontSize:"12px", fontWeight:600, color:"#fff",
-            background:"linear-gradient(135deg,#0d9488,#0891b2)",
+            background:"linear-gradient(135deg,#059669,#7c3aed)",
             boxShadow:"0 3px 12px rgba(13,148,136,.3)",
           }}>Connect Calendar</a>
         </div>
@@ -118,11 +118,11 @@ const AfterHoursPage = () => {
       {error && (
         <div style={{
           display: "flex", alignItems: "center", gap: "9px", padding: "11px 16px",
-          background: "var(--red-light)", border: "1px solid rgba(220,38,38,0.2)",
-          borderRadius: "9px", color: "var(--red)", fontSize: "13px", marginBottom: "20px",
+          background: "var(--purple-light)", border: "1px solid rgba(124,58,237,.2)",
+          borderRadius: "9px", color: "var(--purple)", fontSize: "13px", marginBottom: "20px",
         }}>
           <AlertTriangle size={14} /> {error}
-          <button onClick={() => setError("")} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--red)", cursor: "pointer" }}><X size={13} /></button>
+          <button onClick={() => setError("")} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--purple)", cursor: "pointer" }}><X size={13} /></button>
         </div>
       )}
 
