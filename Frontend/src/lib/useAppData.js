@@ -18,7 +18,11 @@ export function useAppData() {
         // Guard against 304/empty body edge case
         const isAuthed = r.data?.authenticated === true;
         setAuthed(isAuthed);
-        if (r.data?.user) setUser(r.data.user);
+        if (r.data?.user) {
+          const u = r.data.user;
+          // Normalize: always store as `name` regardless of auth method
+          setUser({ ...u, name: u.name || u.displayName || "" });
+        }
       })
       .catch(() => setAuthed(false));
   }, []);
@@ -88,7 +92,7 @@ export function useAppData() {
   };
 
   return {
-    user, authed, allEvents, important, afterHours,
+    user, setUser, authed, allEvents, setAllEvents, important, afterHours,
     loading, error, setError, calendarNotLinked, fetchAll, markDone, declineEvent,
   };
 }

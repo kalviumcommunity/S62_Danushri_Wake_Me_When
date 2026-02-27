@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Zap, Save, CheckCircle, AlertCircle, Clock, Users, Bell, Mail, Tag, Plus, X } from "lucide-react";
+import { ArrowLeft, Zap, Save, CheckCircle, AlertCircle, Clock, Users, Bell, BellRing, Mail, Tag, Plus, X } from "lucide-react";
 import Layout from "./components/Layout";
 import { useAppData } from "./lib/useAppData";
+import { usePushNotifications } from "./lib/usePushNotifications";
 import API from "./lib/api";
 
 // ─── Toggle ───────────────────────────────────────────────────────────────────
@@ -114,6 +115,9 @@ const Config = () => {
   const [alertIntervals,  setAlertIntervals]  = useState([60, 30, 15]);
   const [saving,          setSaving]          = useState(false);
   const [status,          setStatus]          = useState(null);
+  const [testEmailStatus, setTestEmailStatus] = useState(null); // null | "sending" | "ok" | "err"
+  const [testEmailMsg,    setTestEmailMsg]    = useState("");
+  const push = usePushNotifications();
 
   useEffect(() => {
     API.get("/api/user-settings")
@@ -128,6 +132,7 @@ const Config = () => {
         setEmailEnabled(d.emailEnabled ?? false);
         setEmailAddress(d.emailAddress ?? "");
         setAlertIntervals(d.alertIntervals?.length ? d.alertIntervals : [60, 30, 15]);
+
       }).catch(() => {});
   }, []);
 
@@ -181,6 +186,7 @@ const Config = () => {
   return (
     <Layout user={user} impCount={important?.length || 0} afterHoursCount={afterHours?.length || 0} alerts={important || []} onDone={() => {}} onDecline={() => {}}>
       {/* Nav */}
+      <div style={{ maxWidth: "620px", paddingLeft: "6px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "32px" }}>
         <Link to="/home" style={{ textDecoration: "none" }}>
           <button style={{
@@ -200,7 +206,7 @@ const Config = () => {
       </div>
 
       {/* Heading */}
-      <div style={{ marginBottom: "32px" }}>
+      <div style={{ maxWidth: "620px", marginBottom: "32px", paddingLeft: "6px" }}>
         <div style={{
           display: "inline-block", fontFamily: "var(--serif)", fontStyle: "italic",
           fontSize: "12px", color: "var(--teal)", marginBottom: "10px",
@@ -215,7 +221,7 @@ const Config = () => {
         </p>
       </div>
 
-      <div style={{ maxWidth: "620px" }}>
+      <div style={{ maxWidth: "620px", paddingLeft: "6px" }}>
 
         {/* ── Working hours ── */}
         <Section title="Working Hours" icon={Clock} accent="var(--teal)" accentBg="var(--teal-light)">
@@ -289,53 +295,83 @@ const Config = () => {
           </div>
         </Section>
 
-        {/* ── Alert timeline ── */}
-        <Section title="Alert Timeline" icon={Bell} accent="var(--teal)" accentBg="var(--teal-light)">
-          <Row label="Alert me before meetings" description="Choose when to receive reminders before important after-hours meetings" right={null} />
-          <div style={{ padding: "4px 20px 16px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <IntervalCheck value={60} label="1 hour before"    checked={alertIntervals.includes(60)} onChange={toggleInterval} />
-            <IntervalCheck value={30} label="30 mins before"   checked={alertIntervals.includes(30)} onChange={toggleInterval} />
-            <IntervalCheck value={15} label="15 mins before"   checked={alertIntervals.includes(15)} onChange={toggleInterval} />
-          </div>
 
-          {/* Alert window slider */}
-          <Row label="Alert window" description={`Alert for events up to ${alertRange}h before 9am and after ${workEnd % 12 || 12}${workEnd < 12 ? "am" : "pm"}`} right={
+
+        {/* ── Email notifications ── */}
+        {/* ── Alert window ── */}
+        <Section title="Alert Window" icon={Bell} accent="var(--purple)" accentBg="var(--purple-light)">
+          <Row label="Alert window" description={`Alert for events up to ${alertRange}h before and after working hours`} right={
             <span style={{
               fontSize: "14px", fontWeight: 700, color: "var(--teal)",
-              background: "var(--teal-light)", padding: "3px 10px", borderRadius: "6px",
+              background: "var(--purple-light)", padding: "3px 10px", borderRadius: "6px",
               fontFamily: "var(--serif)",
             }}>{alertRange}h</span>
           } noBorder />
           <div style={{ padding: "4px 20px 16px" }}>
-            <input type="range" min={1} max={8} step={1} value={alertRange}
+            <input type="range" min={1} max={5} step={1} value={alertRange}
               onChange={e => setAlertRange(Number(e.target.value))}
-              style={{ width: "100%", accentColor: "var(--teal)", cursor: "pointer" }}
+              style={{ width: "100%", accentColor: "var(--purple)", cursor: "pointer" }}
             />
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
-              {[1,2,3,4,5,6,7,8].map(n => (
-                <span key={n} style={{ fontSize: "10px", fontWeight: n === alertRange ? 700 : 400, color: n === alertRange ? "var(--teal)" : "var(--ink-4)" }}>{n}h</span>
+              {[1,2,3,4,5].map(n => (
+                <span key={n} style={{ fontSize: "10px", fontWeight: n === alertRange ? 700 : 400, color: n === alertRange ? "var(--purple)" : "var(--ink-4)" }}>{n}h</span>
               ))}
             </div>
           </div>
         </Section>
 
-        {/* ── Email notifications ── */}
         <Section title="Email Notifications" icon={Mail} accent="#059669" accentBg="#d1fae5">
           <Row label="Enable email alerts"
-            description="Receive email notifications for important meetings (requires Gmail app password)"
+            description="Receive email notifications for important meetings (requires Gmail app password on server)"
             right={<Toggle checked={emailEnabled} onChange={setEmailEnabled} accent="#059669" />}
           />
           {emailEnabled && (
-            <Row label="Send alerts to" description="Enter the email address to receive notifications" noBorder
-              right={
-                <input value={emailAddress} onChange={e => setEmailAddress(e.target.value)}
-                  placeholder="you@example.com" type="email"
-                  style={{ ...InputStyle, width: "220px" }}
-                  onFocus={e => e.target.style.borderColor = "#059669"}
-                  onBlur={e => e.target.style.borderColor = "var(--border)"}
-                />
-              }
-            />
+            <>
+              <Row label="Send alerts to" description="Enter the email address to receive notifications"
+                right={
+                  <input value={emailAddress} onChange={e => setEmailAddress(e.target.value)}
+                    placeholder="you@example.com" type="email"
+                    style={{ ...InputStyle, width: "220px" }}
+                    onFocus={e => e.target.style.borderColor = "#059669"}
+                    onBlur={e => e.target.style.borderColor = "var(--border)"}
+                  />
+                }
+              />
+
+              {/* Test email button */}
+              <div style={{ padding: "12px 20px", borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", gap: "12px" }}>
+                <button
+                  onClick={async () => {
+                    setTestEmailStatus("sending");
+                    setTestEmailMsg("");
+                    try {
+                      const r = await API.post("/api/test-email");
+                      setTestEmailStatus("ok");
+                      setTestEmailMsg(`Test email sent to ${r.data.sentTo}`);
+                    } catch (e) {
+                      setTestEmailStatus("err");
+                      setTestEmailMsg(e.response?.data?.error || "Failed to send. Check EMAIL_USER and EMAIL_PASS on your server.");
+                    }
+                    setTimeout(() => setTestEmailStatus(null), 6000);
+                  }}
+                  disabled={testEmailStatus === "sending"}
+                  style={{
+                    padding: "7px 16px", borderRadius: "8px", border: "1px solid rgba(5,150,105,0.3)",
+                    background: testEmailStatus === "ok" ? "#d1fae5" : testEmailStatus === "err" ? "var(--red-light)" : "#f0fdf4",
+                    color: testEmailStatus === "err" ? "var(--red)" : "#059669",
+                    fontSize: "12px", fontWeight: 600, cursor: testEmailStatus === "sending" ? "not-allowed" : "pointer",
+                    opacity: testEmailStatus === "sending" ? 0.6 : 1, transition: "all .15s",
+                    fontFamily: "var(--sans)",
+                  }}>
+                  {testEmailStatus === "sending" ? "Sending…" : testEmailStatus === "ok" ? "✓ Sent!" : testEmailStatus === "err" ? "✗ Failed" : "Send test email"}
+                </button>
+                {testEmailMsg && (
+                  <span style={{ fontSize: "11px", color: testEmailStatus === "err" ? "var(--red)" : "#059669" }}>
+                    {testEmailMsg}
+                  </span>
+                )}
+              </div>
+            </>
           )}
           {!emailEnabled && (
             <div style={{ padding: "0 20px 14px" }}>
@@ -344,7 +380,65 @@ const Config = () => {
                 border: "1px solid var(--border)", borderRadius: "8px",
                 fontSize: "12px", color: "var(--ink-3)", lineHeight: 1.6,
               }}>
-                📧 Enable email alerts to receive notifications at 1 hour, 30 minutes, and 15 minutes before important after-hours meetings. Requires <strong>EMAIL_USER</strong> and <strong>EMAIL_PASS</strong> in your server <code>.env</code> file.
+                📧 Enable email alerts to get notified at 1 hour, 30 min, and 15 min before important meetings.
+                Requires <strong>EMAIL_USER</strong> and <strong>EMAIL_PASS</strong> (Gmail app password) in your server <code>.env</code> file.
+              </div>
+            </div>
+          )}
+        </Section>
+
+        {/* ── Alarm notifications ── */}
+        <Section title="Alarm Notifications" icon={BellRing} accent="#7c3aed" accentBg="#ede9fe">
+          <Row
+            label="Wake-up alarm"
+            description={
+              !push.supported ? "Not supported in this browser (use Chrome on desktop or Android)" :
+              push.subscribed ? "Alarm is active — you'll be woken 1 hour before important meetings" :
+              "Get an alarm notification 1 hour before important meetings, even when the tab is closed"
+            }
+            right={
+              !push.supported ? (
+                <span style={{ fontSize:"11px", color:"var(--ink-3)" }}>Not supported</span>
+              ) : (
+                <Toggle
+                  checked={push.subscribed}
+                  onChange={() => push.subscribed ? push.disable() : push.enable()}
+                  accent="#7c3aed"
+                />
+              )
+            }
+          />
+          {push.error && (
+            <div style={{ padding:"0 20px 12px" }}>
+              <div style={{ padding:"8px 12px", background:"var(--red-light)",
+                border:"1px solid rgba(220,38,38,.2)", borderRadius:"7px",
+                fontSize:"11px", color:"var(--red)" }}>
+                {push.error}
+              </div>
+            </div>
+          )}
+          {push.subscribed && (
+            <div style={{ padding:"12px 20px 16px", borderTop:"1px solid var(--border)", display:"flex", alignItems:"center", gap:"10px" }}>
+              <button onClick={push.test} disabled={push.loading}
+                style={{ padding:"7px 16px", borderRadius:"8px",
+                  border:"1px solid rgba(124,58,237,.3)", background:"rgba(237,233,254,.7)",
+                  color:"#7c3aed", fontSize:"12px", fontWeight:600,
+                  cursor: push.loading ? "not-allowed" : "pointer",
+                  opacity: push.loading ? 0.6 : 1, fontFamily:"var(--sans)" }}>
+                {push.loading ? "Sending…" : "Send test alarm"}
+              </button>
+              <span style={{ fontSize:"11px", color:"var(--ink-3)" }}>
+                Make sure your device volume is on
+              </span>
+            </div>
+          )}
+          {!push.subscribed && push.supported && (
+            <div style={{ padding:"0 20px 14px" }}>
+              <div style={{ padding:"10px 14px", background:"var(--surface)",
+                border:"1px solid var(--border)", borderRadius:"8px",
+                fontSize:"12px", color:"var(--ink-3)", lineHeight:1.6 }}>
+                🔔 Enable to receive alarm-style push notifications 1 hour before every important meeting.
+                Works in the background — no tab needed.
               </div>
             </div>
           )}
@@ -373,6 +467,7 @@ const Config = () => {
         <p style={{ textAlign: "center", fontSize: "11px", color: "var(--ink-4)", marginTop: "10px" }}>
           Changes take effect on the next calendar sync (every 7 minutes)
         </p>
+      </div>
       </div>
     </Layout>
   );

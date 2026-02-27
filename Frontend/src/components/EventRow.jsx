@@ -12,17 +12,16 @@ const fmtDate = dt => {
 };
 
 const REASON = {
-  keyword:       { label: "🔤 Keyword match",   bg: "var(--amber-light)", color: "var(--amber)"  },
-  attendee:      { label: "📬 In your To field", bg: "var(--teal-light)",  color: "var(--teal)"   },
+  keyword:       { label: "🔤 Keyword match",   bg: "#dcfce7",             color: "#059669"       },
+  attendee:      { label: "📬 In your To field", bg: "var(--purple-light)", color: "var(--purple)" },
   organizer:     { label: "🗓 You organized",    bg: "#dbeafe",            color: "#1d4ed8"       },
   highImportance:{ label: "❗ High importance",  bg: "var(--red-light)",   color: "var(--red)"    },
 };
 
 const RSVP = {
-  accepted:    { label: "Accepted",     bg: "rgba(209,250,229,.9)",  color: "#059669", dot: "#059669"  },
-  tentative:   { label: "Tentative",    bg: "rgba(254,243,199,.9)",  color: "#b45309", dot: "#f59e0b"  },
-  declined:    { label: "Declined",     bg: "rgba(254,226,226,.9)",  color: "#dc2626", dot: "#ef4444"  },
-  needsAction: { label: "No response",  bg: "rgba(241,245,249,.9)",  color: "#64748b", dot: "#94a3b8"  },
+  accepted:  { label: "Accepted",  bg: "rgba(209,250,229,.9)", color: "#059669", dot: "#059669" },
+  tentative: { label: "Tentative", bg: "rgba(254,243,199,.9)", color: "#b45309", dot: "#f59e0b" },
+  declined:  { label: "Declined",  bg: "rgba(254,226,226,.9)", color: "#dc2626", dot: "#ef4444" },
 };
 
 const getRsvp = (event, userEmail) => {
@@ -36,9 +35,13 @@ const getRsvp = (event, userEmail) => {
 
 export const EventRow = ({ event, showActions, onDone, onDecline, idx = 0, userEmail }) => {
   const dt   = event.start?.dateTime;
-  const late = (() => { if (!dt) return false; const h = new Date(dt).getHours(); return h < 9 || h >= 17; })();
-  const primaryReason = (event.importanceReasons?.find(r => REASON[r])) || event.importanceReason;
-  const accentColor = late ? "var(--purple)"
+  const _hour = dt ? new Date(dt).getHours() : null;
+  const isEarlyMorning = _hour !== null && _hour < 9;
+  const isLateNight    = _hour !== null && _hour >= 17;
+  const late           = isEarlyMorning || isLateNight;
+  const primaryReason  = (event.importanceReasons?.find(r => REASON[r])) || event.importanceReason;
+  const accentColor = isEarlyMorning ? "#059669"
+    : isLateNight    ? "var(--purple)"
     : primaryReason && REASON[primaryReason] ? REASON[primaryReason].color
     : "var(--border)";
   const rsvp = getRsvp(event, userEmail);
@@ -91,7 +94,7 @@ export const EventRow = ({ event, showActions, onDone, onDecline, idx = 0, userE
         <div style={{ minWidth: "62px", textAlign: "right", flexShrink: 0 }}>
           <div style={{
             fontFamily: "var(--serif)", fontSize: "14px", fontWeight: 600, lineHeight: 1.1,
-            color: late ? "var(--purple)" : "var(--teal)",
+            color: isEarlyMorning ? "#059669" : isLateNight ? "var(--purple)" : "#059669",
           }}>{fmtTime(dt)}</div>
           <div style={{ fontSize: "10px", color: "var(--ink-4)", marginTop: "2px", fontWeight: 500 }}>{fmtDate(dt)}</div>
         </div>
@@ -121,7 +124,7 @@ export const EventRow = ({ event, showActions, onDone, onDecline, idx = 0, userE
             <ABtn onClick={handleDone} bg="#d1fae5" hbg="#a7f3d0" color="#059669">
               <CheckCircle size={13} /> Done
             </ABtn>
-            <ABtn onClick={handleDecline} bg="var(--red-light)" hbg="#fecaca" color="var(--red)">
+            <ABtn onClick={handleDecline} bg="var(--purple-light)" hbg="#ddd6fe" color="var(--purple)">
               <XCircle size={13} /> Decline
             </ABtn>
           </div>
@@ -175,8 +178,8 @@ export const PageHeader = ({ title, subtitle, badge, badgeBg, badgeColor, right 
         {badge !== undefined && (
           <span style={{
             fontSize: "12px", fontWeight: 700, padding: "2px 10px",
-            background: badgeBg || "var(--teal-light)",
-            color: badgeColor || "var(--teal)", borderRadius: "6px",
+            background: badgeBg || "#dcfce7",
+            color: badgeColor || "#059669", borderRadius: "6px",
           }}>{badge}</span>
         )}
       </div>

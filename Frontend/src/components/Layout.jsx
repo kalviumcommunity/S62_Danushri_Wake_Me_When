@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Star, Moon, Settings, LogOut, Bell,
-  ChevronRight, User, X, BellOff,
+  ChevronRight, User, X, BellOff, UserCircle,
 } from "lucide-react";
 import API from "../lib/api";
 
@@ -178,11 +178,15 @@ const Layout = ({ user, impCount = 0, afterHoursCount = 0, alerts = [], onDone, 
 
         {/* User */}
         <div style={{ padding: "0 14px 20px" }}>
-          <div style={{
+          <div onClick={() => window.location.href = "/profile"} title="View profile" style={{
             display: "flex", alignItems: "center", gap: "9px", padding: "9px 11px",
             background: "var(--white)", border: "1px solid var(--border)",
             borderRadius: "9px", boxShadow: "var(--shadow-sm)",
-          }}>
+            cursor: "pointer", transition: "border-color 0.15s",
+          }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = "var(--teal)"}
+            onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}
+          >
             <div style={{
               width: "26px", height: "26px", borderRadius: "50%",
               background: "var(--surface)", border: "1px solid var(--border)",

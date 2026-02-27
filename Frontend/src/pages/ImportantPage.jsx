@@ -46,10 +46,10 @@ const ImportantPage = () => {
   }, {});
 
   const REASON_LABELS = {
-    keyword:       { label: "Keyword Match",   color: "var(--teal)",   bg: "var(--teal-light)"   },
-    attendee:      { label: "Required Attendee", color: "var(--amber)",  bg: "var(--amber-light)"  },
+    keyword:       { label: "Keyword Match",   color: "#059669",       bg: "#dcfce7"            },
+    attendee:      { label: "Required Attendee", color: "var(--purple)", bg: "var(--purple-light)" },
     organizer:     { label: "You Organized",   color: "#1d4ed8",       bg: "#dbeafe"             },
-    highImportance:{ label: "High Importance", color: "var(--red)",    bg: "var(--red-light)"    },
+    highImportance:{ label: "High Importance", color: "var(--purple)",  bg: "var(--purple-light)" },
     other:         { label: "Other",           color: "var(--ink-2)",  bg: "var(--surface)"      },
   };
 
@@ -74,7 +74,7 @@ const ImportantPage = () => {
                   color: "var(--ink)", fontSize: "13px", outline: "none",
                   boxShadow: "var(--shadow-sm)", width: "180px",
                 }}
-                onFocus={e => { e.target.style.borderColor = "var(--teal)"; e.target.style.boxShadow = "0 0 0 3px var(--teal-dim)"; }}
+                onFocus={e => { e.target.style.borderColor = "#059669"; e.target.style.boxShadow = "0 0 0 3px rgba(5,150,105,.12)"; }}
                 onBlur={e => { e.target.style.borderColor = "var(--border)"; e.target.style.boxShadow = "var(--shadow-sm)"; }}
               />
               {search && (
@@ -110,7 +110,7 @@ const ImportantPage = () => {
           <a href="/connect-calendar" style={{
             padding:"8px 16px", borderRadius:"9px", textDecoration:"none",
             fontSize:"12px", fontWeight:600, color:"#fff",
-            background:"linear-gradient(135deg,#0d9488,#0891b2)",
+            background:"linear-gradient(135deg,#059669,#7c3aed)",
             boxShadow:"0 3px 12px rgba(13,148,136,.3)",
           }}>Connect Calendar</a>
         </div>
@@ -118,17 +118,17 @@ const ImportantPage = () => {
       {error && (
         <div style={{
           display: "flex", alignItems: "center", gap: "9px", padding: "11px 16px",
-          background: "var(--red-light)", border: "1px solid rgba(220,38,38,0.2)",
-          borderRadius: "9px", color: "var(--red)", fontSize: "13px", marginBottom: "20px",
+          background: "var(--purple-light)", border: "1px solid rgba(124,58,237,.2)",
+          borderRadius: "9px", color: "var(--purple)", fontSize: "13px", marginBottom: "20px",
         }}>
           <AlertTriangle size={14} /> {error}
-          <button onClick={() => setError("")} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--red)", cursor: "pointer" }}><X size={13} /></button>
+          <button onClick={() => setError("")} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--purple)", cursor: "pointer" }}><X size={13} /></button>
         </div>
       )}
 
       {loading ? (
         <div style={{ textAlign: "center", padding: "64px 0" }}>
-          <RefreshCw size={22} style={{ display: "block", margin: "0 auto 14px", animation: "spin 1s linear infinite", color: "var(--teal)" }} />
+          <RefreshCw size={22} style={{ display: "block", margin: "0 auto 14px", animation: "spin 1s linear infinite", color: "#059669" }} />
           <div style={{ fontFamily: "var(--serif)", fontSize: "15px", color: "var(--ink-3)" }}>Scanning your calendar…</div>
         </div>
       ) : filtered.length === 0 ? (

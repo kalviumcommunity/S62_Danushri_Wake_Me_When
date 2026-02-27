@@ -11,8 +11,9 @@
 
 
 
-Frontend link - https://wakemewhen1.netlify.app/home
+Frontend link - https://wakemewhenn.netlify.app/
 
 Backend link - https://s62-danushri-wake-me-when-2-hvmd.onrender.com
 
 
+Everything is working perfectly!!
