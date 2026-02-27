@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import Home             from "./Home";
+import Landing          from "./Landing";
+import Dashboard        from "./Dashboard";
 import ImportantPage    from "./pages/ImportantPage";
 import AfterHoursPage   from "./pages/AfterHoursPage";
 import Config           from "./Config";
@@ -13,8 +14,8 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/"                  element={<Navigate to="/home" />} />
-        <Route path="/home"              element={<Home />} />
+        <Route path="/"                  element={<Landing />} />
+        <Route path="/home"              element={<Dashboard />} />
         <Route path="/login"             element={<Login />} />
         <Route path="/signup"            element={<Signup />} />
         <Route path="/connect-calendar"  element={<ConnectCalendar />} />
