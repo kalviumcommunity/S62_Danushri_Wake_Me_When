@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Landing          from "./Landing";
-import Dashboard        from "./Dashboard";
+import Dashboard        from "./";
 import ImportantPage    from "./pages/ImportantPage";
 import AfterHoursPage   from "./pages/AfterHoursPage";
 import Config           from "./Config";
