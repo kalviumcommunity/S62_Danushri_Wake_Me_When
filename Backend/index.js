@@ -46,10 +46,18 @@ app.use(cors({
   },
   credentials: true,
 }));
+const isProd = process.env.NODE_ENV === "production";
+app.set("trust proxy", 1);
 app.use(session({
   secret: process.env.SESSION_SECRET || "dev-secret",
-  resave: false, saveUninitialized: true,
-  cookie: { secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 }, // 7 days
+  resave: false,
+  saveUninitialized: false,
+  proxy: true,
+  cookie: {
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  },
 }));
 app.use(passport.initialize());
 app.use(passport.session());
