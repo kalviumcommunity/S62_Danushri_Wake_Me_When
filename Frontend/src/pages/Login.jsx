@@ -3,6 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { LogIn, Eye, EyeOff, AlertCircle } from "lucide-react";
 import API from "../lib/api";
 
+const BACKEND = window.location.hostname === "localhost"
+  ? "http://localhost:5000"
+  : "https://s62-danushri-wake-me-when-2-hvmd.onrender.com";
+
 export default function Login() {
   const navigate   = useNavigate();
   const [form, setForm]     = useState({ email: "", password: "" });
@@ -76,7 +80,7 @@ export default function Login() {
           boxShadow:"0 8px 40px rgba(0,0,0,.07), 0 2px 8px rgba(0,0,0,.04)" }}>
 
           {/* Google OAuth */}
-          <a href="http://localhost:5000/api/auth" style={{
+          <a href={`${BACKEND}/api/auth`} style={{
             display:"flex", alignItems:"center", justifyContent:"center", gap:"10px",
             padding:"11px 20px", borderRadius:"12px", textDecoration:"none",
             border:"1.5px solid rgba(203,213,225,.9)", background:"#fff",

@@ -1,10 +1,13 @@
 import axios from "axios";
 
+const BACKEND = window.location.hostname === "localhost"
+  ? "http://localhost:5000"
+  : "https://s62-danushri-wake-me-when-2-hvmd.onrender.com";
+
 const API = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: BACKEND,
   withCredentials: true,
   headers: {
-    // Force fresh responses — prevents 304 "Not Modified" returning empty bodies
     "Cache-Control": "no-cache",
     "Pragma": "no-cache",
   },
@@ -18,7 +21,7 @@ API.interceptors.response.use(
       const url = window.location.pathname;
       if (!url.includes("/login") && !url.includes("/signup")) {
         window.location.href = err.response?.data?.reauth
-          ? "http://localhost:5000/api/auth"
+          ? `${BACKEND}/api/auth`
           : "/login";
       }
     }

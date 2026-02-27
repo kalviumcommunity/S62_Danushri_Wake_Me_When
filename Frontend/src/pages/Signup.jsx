@@ -9,6 +9,10 @@ const rules = [
   { id:"num",   label:"One number",               test: p => /[0-9]/.test(p) },
 ];
 
+const BACKEND = window.location.hostname === "localhost"
+  ? "http://localhost:5000"
+  : "https://s62-danushri-wake-me-when-2-hvmd.onrender.com";
+
 export default function Signup() {
   const navigate = useNavigate();
   const [form, setForm]     = useState({ name:"", email:"", password:"", confirm:"" });
@@ -88,7 +92,7 @@ export default function Signup() {
           boxShadow:"0 8px 40px rgba(0,0,0,.07)" }}>
 
           {/* Google signup */}
-          <a href="http://localhost:5000/api/auth" style={{
+          <a href={`${BACKEND}/api/auth`} style={{
             display:"flex", alignItems:"center", justifyContent:"center", gap:"10px",
             padding:"11px 20px", borderRadius:"12px", textDecoration:"none",
             border:"1.5px solid rgba(203,213,225,.9)", background:"#fff",

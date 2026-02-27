@@ -34,7 +34,18 @@ if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
 // ── Middleware ─────────────────────────────────────────────────────────────────
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+const ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://wakemewhenn.netlify.app",
+];
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) cb(null, true);
+    else cb(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+}));
 app.use(session({
   secret: process.env.SESSION_SECRET || "dev-secret",
   resave: false, saveUninitialized: true,
@@ -61,7 +72,7 @@ passport.use(new GoogleStrategy(
   {
     clientID:     process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL:  "http://localhost:5000/api/auth/callback",
+    callbackURL:  process.env.GOOGLE_CALLBACK_URL || "http://localhost:5000/api/auth/callback",
   },
   (accessToken, refreshToken, profile, done) => {
     return done(null, {
@@ -304,7 +315,7 @@ app.get("/api/auth", passport.authenticate("google", {
 }));
 
 app.get("/api/auth/callback",
-  passport.authenticate("google", { failureRedirect: "http://localhost:5173" }),
+  passport.authenticate("google", { failureRedirect: process.env.FRONTEND_URL || "http://localhost:5173" }),
   async (req, res) => {
     try {
       const gEmail = req.user?.profile?.emails?.[0]?.value?.toLowerCase();
@@ -317,11 +328,11 @@ app.get("/api/auth/callback",
         }
       }
     } catch (_) {}
-    res.redirect("http://localhost:5173/home");
+    res.redirect((process.env.FRONTEND_URL || "http://localhost:5173") + "/home");
   }
 );
 
-app.get("/api/logout", (req, res) => req.logout(() => res.redirect("http://localhost:5173")));
+app.get("/api/logout", (req, res) => req.logout(() => res.redirect(process.env.FRONTEND_URL || "http://localhost:5173")));
 
 // ── Email Auth: Register ───────────────────────────────────────────────────────
 
@@ -440,7 +451,7 @@ app.get("/api/auth/link-calendar", (req, res, next) => {
 
 // Store tokens on linked email account after Google OAuth
 app.get("/api/auth/link-calendar/callback",
-  passport.authenticate("google", { failureRedirect: "http://localhost:5173/login" }),
+  passport.authenticate("google", { failureRedirect: (process.env.FRONTEND_URL || "http://localhost:5173") + "/login" }),
   async (req, res) => {
     try {
       const googleEmail = req.user.profile.emails[0].value.toLowerCase();
@@ -476,10 +487,10 @@ app.get("/api/auth/link-calendar/callback",
         };
       }
 
-      res.redirect("http://localhost:5173/home");
+      res.redirect((process.env.FRONTEND_URL || "http://localhost:5173") + "/home");
     } catch (err) {
       console.error("Link calendar error:", err);
-      res.redirect("http://localhost:5173/home");
+      res.redirect((process.env.FRONTEND_URL || "http://localhost:5173") + "/home");
     }
   }
 );

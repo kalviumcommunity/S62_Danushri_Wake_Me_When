@@ -1,6 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+const BACKEND = window.location.hostname === "localhost"
+  ? "http://localhost:5000"
+  : "https://s62-danushri-wake-me-when-2-hvmd.onrender.com";
+
 export default function ConnectCalendar() {
   return (
     <div style={{
@@ -66,7 +70,7 @@ export default function ConnectCalendar() {
           ))}
         </div>
 
-        <a href="http://localhost:5000/api/auth/link-calendar" style={{
+        <a href={`${BACKEND}/api/auth/link-calendar`} style={{
           display:"flex", alignItems:"center", justifyContent:"center", gap:"10px",
           padding:"13px 28px", borderRadius:"13px", textDecoration:"none", color:"#fff",
           fontSize:"14px", fontWeight:600,
