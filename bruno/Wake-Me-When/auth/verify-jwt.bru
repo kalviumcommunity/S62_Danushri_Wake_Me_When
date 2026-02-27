@@ -1,0 +1,15 @@
+meta {
+  name: Verify JWT Token
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/auth/verify-token
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{jwtToken}}
+}
