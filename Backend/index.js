@@ -1,4 +1,5 @@
 import express        from "express";
+import jwt            from "jsonwebtoken";
 import session        from "express-session";
 import passport       from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
@@ -18,6 +19,7 @@ import webpush       from "web-push";
 
 dotenv.config();
 const app  = express();
+const JWT_SECRET = process.env.JWT_SECRET || "wmw-jwt-secret-key";
 const PORT = process.env.PORT || 5000;
 
 // ── Web Push (VAPID) ───────────────────────────────────────────────────────────
@@ -322,6 +324,21 @@ app.get("/api/auth/callback",
 app.get("/api/logout", (req, res) => req.logout(() => res.redirect("http://localhost:5173")));
 
 // ── Email Auth: Register ───────────────────────────────────────────────────────
+
+// ── JWT: Verify token ──────────────────────────────────────────────────────────
+app.get("/api/auth/verify-token", (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer "))
+    return res.status(401).json({ error: "No token provided." });
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    res.json({ ok: true, user: decoded });
+  } catch (err) {
+    res.status(401).json({ error: "Invalid or expired token." });
+  }
+});
+
 app.post("/api/auth/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -349,7 +366,12 @@ app.post("/api/auth/register", async (req, res) => {
     notifyAdminNewUser({ name: user.name, email: user.email, method: "Email/Password" })
       .catch(err => console.error("Admin notify failed:", err.message));
 
-    res.json({ ok: true, calendarLinked: false, name: user.name, email: user.email });
+    const token = jwt.sign(
+      { id: user._id.toString(), email: user.email, name: user.name },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    res.json({ ok: true, calendarLinked: false, name: user.name, email: user.email, token });
   } catch (err) {
     console.error("Register error:", err);
     res.status(500).json({ error: "Server error. Please try again." });
@@ -384,7 +406,12 @@ app.post("/api/auth/login", async (req, res) => {
       authMethod:    "email",
     };
 
-    res.json({ ok: true, calendarLinked, name: user.name, email: user.email });
+    const token = jwt.sign(
+      { id: user._id.toString(), email: user.email, name: user.name },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    res.json({ ok: true, calendarLinked, name: user.name, email: user.email, token });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "Server error. Please try again." });
