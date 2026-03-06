@@ -1,25 +1,205 @@
-# Wake Me When
+# Wake Me When 
 
-- Wake Me When is a smart meeting filtering and alert system designed to reduce unnecessary interruptions for busy professionals.
-- It helps users avoid non-essential meetings that often waste time, lower productivity, and disrupt work-life balance.
-- The system filters meetings based on:
-  - Whether the meeting is marked as “High Importance”
-  - Presence of critical keywords like “Urgent” or “Attention” in the subject or description
-  - Whether the user is listed explicitly as a required attendee (in the "To" field)
-  - Whether the meeting is scheduled outside the user’s defined working hours
-- Only meetings that truly need the user’s attention are surfaced or notified, helping users stay focused and avoid alert fatigue.
+**Wake Me When** is a smart meeting filtering and alert system designed to reduce unnecessary interruptions for busy professionals. It intelligently surfaces only the meetings that truly need your attention — so you can stay focused and avoid alert fatigue.
+
+---
+
+## Problem Statement
+
+Professionals are overwhelmed with an ever-growing stream of meeting invites. Most of these meetings are informational or optional, leading to:
+
+- Wasted time in unnecessary meetings
+- Reduced productivity and deep-focus work
+- Difficulty maintaining work-life balance, especially outside working hours
+
+**Wake Me When** solves this by filtering meetings based on:
+- Whether the meeting is marked as **High Importance**
+- Presence of critical keywords (e.g., *"Urgent"*, *"Attention"*) in the subject or description
+- Whether the user is explicitly listed as a **required attendee** (in the "To" field)
+- Whether the meeting falls **outside defined working hours**
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React (Vite), deployed on Netlify |
+| Backend | Node.js + Express, deployed on Render |
+| Database | MongoDB (Mongoose ODM) |
+| Auth | JWT + Google OAuth (Passport.js) |
+| API Docs | Bruno |
+
+---
+
+## Database Schema
+
+Three core collections power the application:
+
+**Users**
+- Profile info, hashed password, Google OAuth ID
+- Defined working hours and alert preferences
+- Critical keyword list
+
+**Meetings**
+- Meeting title, description, organizer, attendees
+- Importance flag, matched keywords
+- Start/end time, alert schedule
+
+**Notification Logs**
+- Linked meeting and user
+- Alert timestamps (1hr / 30min / 15min before)
+- Delivery status
+
+Entity relationships:
+- `User` → many `Meetings` (one-to-many)
+- `Meeting` → many `NotificationLogs` (one-to-many)
+- `User` → many `NotificationLogs` (via ref)
+
+---
+
+## 🔌 API Reference
+
+All routes are prefixed with `/api`. Protected routes require a valid JWT in the `Authorization: Bearer <token>` header.
+
+### Auth
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/auth/register` | Register a new user |
+| `POST` | `/auth/login` | Login and receive JWT |
+| `GET` | `/auth/google` | Initiate Google OAuth |
+| `GET` | `/auth/google/callback` | Google OAuth callback |
+
+### Meetings
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/meetings` | Fetch all meetings for the logged-in user |
+| `GET` | `/meetings/:id` | Get a single meeting by ID |
+| `POST` | `/meetings` | Create a new meeting entry |
+| `PUT` | `/meetings/:id` | Update an existing meeting |
+| `DELETE` | `/meetings/:id` | Delete a meeting |
+
+### User Settings
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/users/me` | Get current user profile |
+| `PUT` | `/users/me` | Update working hours, keywords, alert preferences |
+| `POST` | `/users/upload` | Upload profile picture or attachment |
+
+> Full Bruno API collection is available in `/api-docs` in the repo.
+
+---
+
+## Authentication
+
+The app supports two authentication methods:
+
+### Username / Password
+- Passwords are hashed using **bcrypt** before storage
+- On login, a signed **JWT** is returned and stored client-side
+- All protected API calls include the token in the `Authorization` header
+- Token expiry and refresh handled on the frontend
+
+### Google OAuth (3rd Party)
+- Implemented via **Passport.js** with the Google strategy
+- Users can sign in with their Google account — no password required
+- On first login, a new user record is created automatically
+- Subsequent logins match on Google ID
+
+---
+
+## File Upload
+
+Users can upload files (e.g., profile images, meeting attachments) via the `/users/upload` endpoint:
+
+- Handled server-side using **Multer**
+- Files are validated for type and size before storage
+- Upload state is reflected immediately in the React UI
+
+---
+
+## Frontend
+
+The React application is structured around the following key components:
+
+| Component | Description |
+|---|---|
+| `Dashboard` | Overview of upcoming filtered meetings and alerts |
+| `MeetingCard` | Individual meeting display with importance indicators |
+| `AlertTimeline` | Visual timeline of scheduled alerts |
+| `SettingsPanel` | Configure working hours, keywords, and alert modes |
+| `AuthForms` | Login, register, and Google OAuth entry points |
+| `UploadWidget` | File/image upload with preview |
+
+The UI matches the approved HiFi Figma designs — including layout, color system, typography, and component states.
+
+---
+
+## Deployment
+
+| Service | Platform | Status |
+|---|---|---|
+| Frontend | Netlify | Live |
+| Backend | Render | Live |
+
+**Frontend** is auto-deployed from the `main` branch on push.  
+**Backend** is deployed as a web service on Render with environment variables configured via the Render dashboard.
+
+---
+
+## Project Management
+
+Development was tracked using **GitHub Projects** with a Kanban board. The board organized work into:
+
+- **Backlog** — planned features and concepts
+- **In Progress** — active development items
+- **Done** — completed and verified milestones
+
+All capstone concept milestones were mapped to GitHub issues and linked to pull requests.
+
+---
+
+## Future Scope
+
+- **AI/ML feedback loop** — learn from attended/skipped patterns to improve filtering
+- **Outlook Calendar integration** — broaden beyond Exchange Server
+- **Mobile push notifications** — extend alerts to iOS/Android
+- **NLP meeting summaries** — auto-summarize missed meetings
+- **Slack status sync** — pause Slack DND during critical meetings
+- **SMS/WhatsApp alerts** — via Twilio
+
+---
+
+## Running Locally
+
+```bash
+# Clone the repo
+git clone https://github.com/kalviumcommunity/S62_Danushri_Wake_Me_When.git
+
+# Backend
+cd server
+npm install
+cp .env.example .env   # fill in your MongoDB URI, JWT secret, Google OAuth keys
+npm run dev
+
+# Frontend
+cd client
+npm install
+npm run dev
+```
+
+---
 
 
+**Frontend:** [wakemewhenn.netlify.app](https://wakemewhenn.netlify.app/)  
 
-Frontend link - https://wakemewhenn.netlify.app/
+**Backend:** [s62-danushri-wake-me-when-2-hvmd.onrender.com](https://s62-danushri-wake-me-when-2-hvmd.onrender.com) 
 
+**Figma HiFi:** [View Design](https://www.figma.com/design/6R1dstmbMXIjf1bri60CGc/html.to.design-%E2%80%94-by-%E2%80%B9div%E2%80%BARIOTS-%E2%80%94-Import-websites-to-Figma-designs--web-html-css---Community-?node-id=0-1&t=wfpBTddXWdgrxnvF-1)  
 
-Backend link - https://s62-danushri-wake-me-when-2-hvmd.onrender.com
+**Prototype:** [View Prototype](https://www.figma.com/proto/6R1dstmbMXIjf1bri60CGc/html.to.design-%E2%80%94-by-%E2%80%B9div%E2%80%BARIOTS-%E2%80%94-Import-websites-to-Figma-designs--web-html-css---Community-?node-id=0-1&t=wfpBTddXWdgrxnvF-1)
 
-Figma HIFI - https://www.figma.com/design/6R1dstmbMXIjf1bri60CGc/html.to.design-%E2%80%94-by-%E2%80%B9div%E2%80%BARIOTS-%E2%80%94-Import-websites-to-Figma-designs--web-html-css---Community-?node-id=0-1&t=wfpBTddXWdgrxnvF-1
-
-Prototype - https://www.figma.com/proto/6R1dstmbMXIjf1bri60CGc/html.to.design-%E2%80%94-by-%E2%80%B9div%E2%80%BARIOTS-%E2%80%94-Import-websites-to-Figma-designs--web-html-css---Community-?node-id=0-1&t=wfpBTddXWdgrxnvF-1
-
-Everything is working perfectly!!
-
-let it work
+---
