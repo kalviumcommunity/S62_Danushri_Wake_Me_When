@@ -226,3 +226,7 @@ npm run dev
 **Prototype:** [View Prototype](https://www.figma.com/proto/6R1dstmbMXIjf1bri60CGc/html.to.design-%E2%80%94-by-%E2%80%B9div%E2%80%BARIOTS-%E2%80%94-Import-websites-to-Figma-designs--web-html-css---Community-?node-id=0-1&t=wfpBTddXWdgrxnvF-1)
 
 ---
+
+Everything is up to date the Implemented file upload functionality in the application
+
+u can also upload files in this project
