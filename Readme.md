@@ -108,6 +108,15 @@ The app supports two authentication methods:
 - Users can sign in with their Google account — no password required
 - On first login, a new user record is created automatically
 - Subsequent logins match on Google ID
+- User clicks "Sign in with Google" on the frontend
+- Browser redirects to GET /auth/google — Passport initiates the OAuth handshake with Google
+- Google prompts the user to select an account and grant permission
+- Google redirects back to GET /auth/google/callback with an authorization code
+- Passport exchanges the code for an access token and retrieves the user's Google profile
+- Server checks if a user with that Google ID already exists in MongoDB:
+- New user → record is created with name, email, and Google ID; JWT is issued
+- Returning user → existing record is matched on Google ID; JWT is issued
+- JWT is returned to the frontend and stored for subsequent API calls
 
 ---
 
