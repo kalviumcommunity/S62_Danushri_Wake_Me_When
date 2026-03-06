@@ -58,7 +58,7 @@ Entity relationships:
 
 ---
 
-## 🔌 API Reference
+## API Reference
 
 All routes are prefixed with `/api`. Protected routes require a valid JWT in the `Authorization: Bearer <token>` header.
 
@@ -138,6 +138,33 @@ The UI matches the approved HiFi Figma designs — including layout, color syste
 
 ---
 
+## Design to End State
+
+The final deployed application matches the approved HiFi Figma prototype across all core screens. Below is a breakdown of how each key view translated from design to implementation:
+
+| Screen | Design Intent | End State |
+|---|---|---|
+| **Login / Register** | Clean auth forms with Google OAuth button | ✅ Matches — JWT + Google OAuth both functional |
+| **Dashboard** | Meeting list with importance badges and alert countdown | ✅ Matches — filtered meetings rendered with status indicators |
+| **Settings Panel** | Working hours picker, keyword input, alert toggles | ✅ Matches — all preferences persist to MongoDB |
+| **Alert Timeline** | Visual strip of upcoming alerts (1hr / 30min / 15min) | ✅ Matches — timeline renders based on real meeting data |
+| **Meeting Detail** | Expanded view with attendees, description, importance flag | ✅ Matches — all meeting fields displayed |
+| **File Upload** | Upload widget with preview state | ✅ Matches — Multer integration with immediate UI feedback |
+
+### Design Decisions Carried Through
+
+- **Color system** — accent colors from Figma applied consistently via CSS variables
+- **Typography** — font weights and sizes match the design spec across headings, body, and labels
+- **Component spacing** — padding and margin values mirror the Figma layout grid
+- **Empty states** — "No critical meetings" placeholder matches the designed empty state illustration
+- **Responsive behavior** — layout collapses correctly on smaller viewports as per the mobile frames in Figma
+
+**HiFi Reference:** [View Figma Design](https://www.figma.com/design/6R1dstmbMXIjf1bri60CGc/html.to.design-%E2%80%94-by-%E2%80%B9div%E2%80%BARIOTS-%E2%80%94-Import-websites-to-Figma-designs--web-html-css---Community-?node-id=0-1&t=wfpBTddXWdgrxnvF-1)  
+**Prototype:** [View Clickable Prototype](https://www.figma.com/proto/6R1dstmbMXIjf1bri60CGc/html.to.design-%E2%80%94-by-%E2%80%B9div%E2%80%BARIOTS-%E2%80%94-Import-websites-to-Figma-designs--web-html-css---Community-?node-id=0-1&t=wfpBTddXWdgrxnvF-1)  
+**Live App:** [wakemewhenn.netlify.app](https://wakemewhenn.netlify.app/)
+
+---
+
 ## Deployment
 
 | Service | Platform | Status |
@@ -177,7 +204,7 @@ All capstone concept milestones were mapped to GitHub issues and linked to pull 
 
 ```bash
 # Clone the repo
-git clone https://github.com/kalviumcommunity/S62_Danushri_Wake_Me_When.git
+git clone https://github.com/<your-username>/wake-me-when.git
 
 # Backend
 cd server
@@ -193,14 +220,9 @@ npm run dev
 
 ---
 
-
-**Frontend link** - https://wakemewhenn.netlify.app/
-
-
-**Backend link** - https://s62-danushri-wake-me-when-2-hvmd.onrender.com
-
-**Figma HIFI** - https://www.figma.com/design/6R1dstmbMXIjf1bri60CGc/html.to.design-%E2%80%94-by-%E2%80%B9div%E2%80%BARIOTS-%E2%80%94-Import-websites-to-Figma-designs--web-html-css---Community-?node-id=0-1&t=wfpBTddXWdgrxnvF-1
-
-**Prototype** - https://www.figma.com/proto/6R1dstmbMXIjf1bri60CGc/html.to.design-%E2%80%94-by-%E2%80%B9div%E2%80%BARIOTS-%E2%80%94-Import-websites-to-Figma-designs--web-html-css---Community-?node-id=0-1&t=wfpBTddXWdgrxnvF-1
+**Frontend:** [wakemewhenn.netlify.app](https://wakemewhenn.netlify.app/)  
+**Backend:** [s62-danushri-wake-me-when-2-hvmd.onrender.com](https://s62-danushri-wake-me-when-2-hvmd.onrender.com)  
+**Figma HiFi:** [View Design](https://www.figma.com/design/6R1dstmbMXIjf1bri60CGc/html.to.design-%E2%80%94-by-%E2%80%B9div%E2%80%BARIOTS-%E2%80%94-Import-websites-to-Figma-designs--web-html-css---Community-?node-id=0-1&t=wfpBTddXWdgrxnvF-1)  
+**Prototype:** [View Prototype](https://www.figma.com/proto/6R1dstmbMXIjf1bri60CGc/html.to.design-%E2%80%94-by-%E2%80%B9div%E2%80%BARIOTS-%E2%80%94-Import-websites-to-Figma-designs--web-html-css---Community-?node-id=0-1&t=wfpBTddXWdgrxnvF-1)
 
 ---
