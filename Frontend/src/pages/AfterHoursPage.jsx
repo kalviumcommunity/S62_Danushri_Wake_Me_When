@@ -21,11 +21,11 @@ const fmtDate = dt => {
 const getSlot = dt => {
   if (!dt) return "late";
   const h = new Date(dt).getHours();
-  if (h >= 0  && h <  6)  return "overnight";   // midnight – 6am
-  if (h >= 6  && h < 12)  return "morning";      // 6am – 12pm
-  if (h >= 12 && h < 17)  return "afternoon";    // 12pm – 5pm
-  if (h >= 17 && h < 20)  return "evening";      // 5pm – 8pm
-  return "late";                                  // 8pm – midnight
+  if (h >= 0  && h <  6)  return "overnight";
+  if (h >= 6  && h < 12)  return "morning";
+  if (h >= 12 && h < 17)  return "afternoon";
+  if (h >= 17 && h < 20)  return "evening";
+  return "late";
 };
 
 const SLOTS = {
