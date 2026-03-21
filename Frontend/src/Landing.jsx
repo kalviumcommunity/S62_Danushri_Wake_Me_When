@@ -140,31 +140,25 @@ const PILLS = {
   filtered2: { dot:"#94a3b8", border:"rgba(148,163,184,.25)", bg:"rgba(248,250,252,.88)", text:"Coffee Chat — Filtered",    bold:false },
 };
 const FLOAT_ITEMS = [
-  // Far left
   { t:"i", icon:"bell",     color:"#7c3aed", border:"rgba(124,58,237,.28)",   top:"12vh", left:"1.5%", anim:"fi1 8s ease-in-out infinite" },
   { t:"p", k:"filtered1",   top:"32vh", left:"1%",   anim:"fi4 9s ease-in-out infinite .6s" },
   { t:"i", icon:"check",    color:"#059669", border:"rgba(5,150,105,.28)",  top:"55vh", left:"2%",   anim:"fi3 9s ease-in-out infinite .4s" },
   { t:"p", k:"urgent",      top:"76vh", left:"1%",   anim:"fi6 10s ease-in-out infinite 2s" },
-  // Mid-left — fills top+bottom left gaps
   { t:"p", k:"wake1",       top:"6vh",  left:"14%",  anim:"fi2 8s ease-in-out infinite 1s" },
   { t:"i", icon:"calendar", color:"#8b5cf6", border:"rgba(139,92,246,.28)",  top:"22vh", left:"15%",  anim:"fi5 10s ease-in-out infinite 2s" },
   { t:"i", icon:"person",   color:"#059669", border:"rgba(5,150,105,.28)",  top:"70vh", left:"14%",  anim:"fi7 9s ease-in-out infinite 1.5s" },
   { t:"p", k:"filtered2",   top:"84vh", left:"13%",  anim:"fi3 8s ease-in-out infinite" },
-  // Inner-left (beside hero text)
   { t:"i", icon:"mail",     color:"#f59e0b", border:"rgba(245,158,11,.28)",  top:"10vh", left:"40%",  anim:"fi6 9s ease-in-out infinite 1s" },
   { t:"i", icon:"bell",     color:"#8b5cf6", border:"rgba(139,92,246,.28)",  top:"44vh", left:"41%",  anim:"fi1 9s ease-in-out infinite 3s" },
   { t:"i", icon:"check",    color:"#7c3aed", border:"rgba(124,58,237,.28)",   top:"78vh", left:"40%",  anim:"fi5 8s ease-in-out infinite 2s" },
-  // Inner-right (beside triage card)
   { t:"i", icon:"person",   color:"#059669", border:"rgba(5,150,105,.28)",  top:"7vh",  left:"53%",  anim:"fi4 10s ease-in-out infinite 1s" },
   { t:"p", k:"check2",      top:"30vh", left:"52%",  anim:"fi8 9s ease-in-out infinite .5s" },
   { t:"i", icon:"calendar", color:"#7c3aed", border:"rgba(124,58,237,.28)",   top:"62vh", left:"53%",  anim:"fi2 8s ease-in-out infinite 2.5s" },
   { t:"i", icon:"mail",     color:"#8b5cf6", border:"rgba(139,92,246,.28)",  top:"82vh", left:"52%",  anim:"fi7 7s ease-in-out infinite 3s" },
-  // Mid-right — fills top+bottom right gaps
   { t:"i", icon:"check",    color:"#f59e0b", border:"rgba(245,158,11,.28)",  top:"5vh",  right:"14%", anim:"fi3 8s ease-in-out infinite .8s" },
   { t:"p", k:"urgent2",     top:"20vh", right:"13%", anim:"fi5 9s ease-in-out infinite 1.5s" },
   { t:"i", icon:"bell",     color:"#059669", border:"rgba(5,150,105,.28)",  top:"72vh", right:"15%", anim:"fi6 8s ease-in-out infinite" },
   { t:"p", k:"wake2",       top:"85vh", right:"14%", anim:"fi1 10s ease-in-out infinite 2s" },
-  // Far right
   { t:"p", k:"filtered1",   top:"10vh", right:"1%",  anim:"fi7 8s ease-in-out infinite .5s" },
   { t:"i", icon:"mail",     color:"#059669", border:"rgba(5,150,105,.28)",  top:"35vh", right:"2%",  anim:"fi4 9s ease-in-out infinite 1s" },
   { t:"i", icon:"person",   color:"#8b5cf6", border:"rgba(139,92,246,.28)",  top:"58vh", right:"1.5%",anim:"fi2 7s ease-in-out infinite 3s" },
@@ -247,7 +241,6 @@ function LoginScreen() {
 
         {/* HERO */}
         <section style={{display:"flex",minHeight:"calc(100vh - 65px)",alignItems:"stretch"}}>
-          {/* Left — centered */}
           <div style={{width:"50%",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",padding:"60px 48px",textAlign:"center",position:"relative",zIndex:5}}>
             <div style={{animation:"fade-up .5s ease both",marginBottom:"18px"}}>
               <img src="/logo.jpg" alt="WMW" style={{width:"60px",height:"60px",borderRadius:"18px",objectFit:"cover",boxShadow:"0 6px 28px rgba(0,0,0,.14)"}}/>
@@ -274,7 +267,6 @@ function LoginScreen() {
               </svg>
             </div>
           </div>
-          {/* Right — triage card */}
           <div style={{width:"50%",display:"flex",alignItems:"center",justifyContent:"center",padding:"60px 48px",borderLeft:"1px solid rgba(203,213,225,.4)",position:"relative",zIndex:5}}>
             <div style={{width:"100%",maxWidth:"480px",borderRadius:"22px",overflow:"hidden",boxShadow:"0 16px 60px rgba(0,0,0,.1), 0 3px 14px rgba(0,0,0,.05)",border:"1px solid rgba(203,213,225,.55)",background:"#fff",animation:"float-card 7s ease-in-out infinite"}}>
               <TriageAnimation/>
@@ -306,7 +298,7 @@ function LoginScreen() {
           </div>
         </section>
 
-        {/* HOW IT WORKS */}
+        {/* ── HOW IT WORKS — CONTENT UPDATED ── */}
         <section style={{padding:"80px 56px",background:"#f8faff",position:"relative",zIndex:10}}>
           <div style={{textAlign:"center",marginBottom:"52px"}}>
             <span style={{fontSize:"10px",fontWeight:700,color:"#8b5cf6",letterSpacing:".12em",textTransform:"uppercase"}}>HOW IT WORKS</span>
@@ -315,9 +307,21 @@ function LoginScreen() {
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"0",maxWidth:"860px",margin:"0 auto",position:"relative"}}>
             <div style={{position:"absolute",top:"27px",left:"calc(16.66% + 12px)",right:"calc(16.66% + 12px)",height:"2px",background:"linear-gradient(to right,rgba(5,150,105,.3),rgba(124,58,237,.3))",zIndex:0}}/>
             {[
-              {n:"1",color:"#059669",bg:"rgba(240,253,250,.9)",border:"rgba(5,150,105,.3)",title:"Sign up & connect",      desc:"Create your account and grant read-only access to your Google Calendar."},
-              {n:"2",color:"#8b5cf6",bg:"rgba(245,243,255,.9)",border:"rgba(139,92,246,.3)",title:"Set your preferences",   desc:"Define working hours, keywords and who counts as a required attendee."},
-              {n:"3",color:"#7c3aed",bg:"rgba(240,249,255,.9)",border:"rgba(124,58,237,.3)", title:"Go about your day",      desc:"We watch the calendar. You only get woken when it genuinely matters."},
+              {
+                n:"1", color:"#059669", bg:"rgba(240,253,250,.9)", border:"rgba(5,150,105,.3)",
+                title:"Sign up & connect your calendar",
+                desc:"Create your account and connect your Google Calendar. We only need read access — your events stay private.",
+              },
+              {
+                n:"2", color:"#8b5cf6", bg:"rgba(245,243,255,.9)", border:"rgba(139,92,246,.3)",
+                title:"Set your filters & working hours",
+                desc:"Tell us your work hours, add keywords like 'urgent' or 'attention', and choose whether to include weekend or after-hours meetings.",
+              },
+              {
+                n:"3", color:"#7c3aed", bg:"rgba(240,249,255,.9)", border:"rgba(124,58,237,.3)",
+                title:"Get alerted only when it matters",
+                desc:"We scan every meeting and surface only the ones that are marked important, contain your keywords, or explicitly need you as an attendee.",
+              },
             ].map(({n,color,bg,border,title,desc})=>(
               <div key={n} style={{display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",padding:"0 32px",position:"relative",zIndex:1}}>
                 <div style={{width:"56px",height:"56px",borderRadius:"50%",background:bg,border:`2px solid ${border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"18px",fontWeight:700,color,marginBottom:"22px",boxShadow:`0 4px 18px ${color}20`}}>{n}</div>
@@ -328,19 +332,35 @@ function LoginScreen() {
           </div>
         </section>
 
-        {/* WHO IT'S FOR */}
+        {/* ── WHO IT'S FOR — CONTENT UPDATED ── */}
         <section style={{padding:"80px 56px",background:"#ffffff",position:"relative",zIndex:10}}>
           <div style={{textAlign:"center",marginBottom:"52px"}}>
             <span style={{fontSize:"10px",fontWeight:700,color:"#7c3aed",letterSpacing:".12em",textTransform:"uppercase"}}>WHO IT'S FOR</span>
-            <h2 style={{fontFamily:"'DM Serif Display',Georgia,serif",fontSize:"36px",fontWeight:400,color:"#0f172a",margin:"10px 0 12px"}}>Built for people who can't afford to miss what matters</h2>
-            <p style={{fontSize:"14px",color:"#64748b",maxWidth:"440px",margin:"0 auto",lineHeight:1.8}}>Whether you're deep in focus, on a call, or just offline — Wake Me When always has your back.</p>
+            <h2 style={{fontFamily:"'DM Serif Display',Georgia,serif",fontSize:"36px",fontWeight:400,color:"#0f172a",margin:"10px 0 12px"}}>Built for anyone drowning in calendar invites</h2>
+            <p style={{fontSize:"14px",color:"#64748b",maxWidth:"440px",margin:"0 auto",lineHeight:1.8}}>If your Google Calendar is full but most meetings don't actually need you — Wake Me When is for you.</p>
           </div>
           <div style={{maxWidth:"980px",margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"18px"}}>
             {[
-              {emoji:"💻",title:"Developers & Deep Workers",  desc:"You're in a flow state. The last thing you need is a calendar ping for a standup that doesn't need you. Wake Me When filters it — silently, in the background.", bg:"rgba(240,253,250,.7)",border:"rgba(5,150,105,.2)"},
-              {emoji:"📊",title:"Managers & Team Leads",      desc:"You're pulled in ten directions. Define once which meetings truly need you, and let everything else run without breaking your focus.",                             bg:"rgba(245,243,255,.7)",border:"rgba(139,92,246,.2)"},
-              {emoji:"🚀",title:"Founders & Executives",      desc:"Your time is your most expensive resource. Stop losing it to meetings you could've skipped. Only get woken when your decision is genuinely on the line.",           bg:"rgba(240,249,255,.7)",border:"rgba(124,58,237,.2)"},
-              {emoji:"🎨",title:"Creatives & Freelancers",    desc:"Deep work is your product. One unnecessary interruption breaks hours of momentum. Let Wake Me When protect your most valuable uninterrupted hours.",                  bg:"rgba(255,251,235,.7)",border:"rgba(245,158,11,.2)"},
+              {
+                emoji:"💻", title:"Students & Interns",
+                desc:"You get added to every team meeting even when you're not really needed. Wake Me When checks if you're actually in the 'To' field and only alerts you when your presence genuinely matters.",
+                bg:"rgba(240,253,250,.7)", border:"rgba(5,150,105,.2)",
+              },
+              {
+                emoji:"📊", title:"Working Professionals",
+                desc:"Back-to-back meetings eat your whole day. Set your working hours and keywords — Wake Me When filters out the noise and only pings you for meetings flagged urgent, important, or critical.",
+                bg:"rgba(245,243,255,.7)", border:"rgba(139,92,246,.2)",
+              },
+              {
+                emoji:"🚀", title:"Freelancers & Consultants",
+                desc:"You work across multiple clients and time zones. After-hours meetings sneak up on you. Wake Me When tracks meetings outside your work window and groups them so nothing slips through.",
+                bg:"rgba(240,249,255,.7)", border:"rgba(124,58,237,.2)",
+              },
+              {
+                emoji:"🎨", title:"Remote & Async Teams",
+                desc:"Not every Slack invite needs a response. Wake Me When connects to your Google Calendar and surfaces only the meetings where you are a required attendee or the topic is genuinely urgent.",
+                bg:"rgba(255,251,235,.7)", border:"rgba(245,158,11,.2)",
+              },
             ].map(({emoji,title,desc,bg,border})=>(
               <div key={title} style={{padding:"30px 28px",borderRadius:"20px",background:bg,border:`1px solid ${border}`,boxShadow:"0 2px 16px rgba(0,0,0,.04)",display:"flex",gap:"20px",alignItems:"flex-start",transition:"all .25s",cursor:"default"}}
                 onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow="0 12px 36px rgba(0,0,0,.09)";}}
@@ -355,14 +375,14 @@ function LoginScreen() {
           </div>
         </section>
 
-        {/* FINAL CTA */}
+        {/* ── FINAL CTA — CONTENT UPDATED ── */}
         <section style={{padding:"80px 56px",textAlign:"center",background:"#f8faff",position:"relative",zIndex:10}}>
           <div style={{maxWidth:"500px",margin:"0 auto",background:"linear-gradient(135deg,rgba(5,150,105,.09),rgba(139,92,246,.07))",border:"1px solid rgba(5,150,105,.18)",borderRadius:"24px",padding:"48px 40px"}}>
-            <div style={{fontSize:"36px",marginBottom:"14px"}}>🚀</div>
-            <h2 style={{fontFamily:"'DM Serif Display',Georgia,serif",fontSize:"30px",fontWeight:400,color:"#0f172a",marginBottom:"12px"}}>Ready to take back your day?</h2>
-            <p style={{fontSize:"14px",color:"#64748b",lineHeight:1.8,marginBottom:"28px"}}>Let AI decide what truly deserves your attention. Free to get started.</p>
-            <a href="/signup" className="cta-primary" style={{display:"inline-flex",alignItems:"center",padding:"14px 38px",borderRadius:"13px",color:"#fff",fontSize:"15px",fontWeight:600,textDecoration:"none",background:"linear-gradient(135deg,#0d9488,#0891b2)",boxShadow:"0 8px 28px rgba(13,148,136,.32)",transition:"filter .2s"}}>Create free account →</a>
-            <p style={{fontSize:"11px",color:"#cbd5e1",marginTop:"14px"}}>No credit card required</p>
+            <div style={{fontSize:"36px",marginBottom:"14px"}}>⏰</div>
+            <h2 style={{fontFamily:"'DM Serif Display',Georgia,serif",fontSize:"30px",fontWeight:400,color:"#0f172a",marginBottom:"12px"}}>Stop attending meetings that don't need you.</h2>
+            <p style={{fontSize:"14px",color:"#64748b",lineHeight:1.8,marginBottom:"28px"}}>Connect your Google Calendar, set your preferences once, and let Wake Me When do the filtering. You'll only hear from us when it actually matters.</p>
+            <a href="/signup" className="cta-primary" style={{display:"inline-flex",alignItems:"center",padding:"14px 38px",borderRadius:"13px",color:"#fff",fontSize:"15px",fontWeight:600,textDecoration:"none",background:"linear-gradient(135deg,#0d9488,#0891b2)",boxShadow:"0 8px 28px rgba(13,148,136,.32)",transition:"filter .2s"}}>Connect my calendar →</a>
+            <p style={{fontSize:"11px",color:"#cbd5e1",marginTop:"14px"}}>Free to use · Google Calendar required</p>
           </div>
         </section>
 
