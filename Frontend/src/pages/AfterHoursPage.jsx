@@ -15,21 +15,30 @@ const fmtDate = dt => {
   return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 };
 
-// Group events into Early Morning / Evening / Night
+// Group events into time slots
+// FIX: Added "weekend" slot for Saturday/Sunday daytime (9am–5pm) meetings
+//      Previously these fell into "late" (Late Night) which was wrong
 const getSlot = dt => {
-  if (!dt) return "other";
-  const h = new Date(dt).getHours();
+  if (!dt) return "late";
+  const d   = new Date(dt);
+  const h   = d.getHours();
+  const day = d.getDay(); // 0 = Sunday, 6 = Saturday
+
+  // Weekend daytime — has its own bucket so it doesn't show as "Late Night"
+  if ((day === 0 || day === 6) && h >= 6 && h < 20) return "weekend";
+
   if (h >= 0  && h < 6)  return "night";
   if (h >= 6  && h < 9)  return "morning";
   if (h >= 17 && h < 20) return "evening";
-  return "late";
+  return "late"; // 8pm+
 };
 
 const SLOTS = {
-  morning: { label: "Early Morning", desc: "Before 9am",       color: "#d97706",        bg: "#fef3c7"  },
-  evening: { label: "Evening",       desc: "After 5pm",        color: "var(--purple)",  bg: "var(--purple-light)" },
-  late:    { label: "Late Night",    desc: "After 8pm",        color: "#6d28d9",        bg: "#ede9fe"  },
-  night:   { label: "Overnight",     desc: "Midnight to 6am",  color: "#1e40af",        bg: "#dbeafe"  },
+  morning: { label: "Early Morning", icon: "🌅", desc: "Before 9am",        color: "#d97706",       bg: "#fef3c7"  },
+  evening: { label: "Evening",       icon: "🌆", desc: "After 5pm",         color: "var(--purple)", bg: "var(--purple-light)" },
+  late:    { label: "Late Night",    icon: "🌙", desc: "After 8pm",         color: "#6d28d9",       bg: "#ede9fe"  },
+  night:   { label: "Overnight",     icon: "🌛", desc: "Midnight to 6am",   color: "#1e40af",       bg: "#dbeafe"  },
+  weekend: { label: "Weekend",       icon: "📅", desc: "Weekend meeting",   color: "#0f766e",       bg: "#ccfbf1"  },
 };
 
 const AfterHoursPage = () => {
@@ -96,7 +105,7 @@ const AfterHoursPage = () => {
         }
       />
 
-      {/* Error */}
+      {/* Calendar not linked warning */}
       {calendarNotLinked && (
         <div style={{ display:"flex", alignItems:"center", gap:"12px",
           padding:"14px 18px", marginBottom:"16px",
@@ -115,6 +124,8 @@ const AfterHoursPage = () => {
           }}>Connect Calendar</a>
         </div>
       )}
+
+      {/* Error */}
       {error && (
         <div style={{
           display: "flex", alignItems: "center", gap: "9px", padding: "11px 16px",
@@ -129,12 +140,13 @@ const AfterHoursPage = () => {
       {/* Slot overview pills */}
       {slotCounts.length > 0 && !loading && (
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "24px" }}>
-          {slotCounts.map(({ slot, label, desc, count, color, bg }) => (
+          {slotCounts.map(({ slot, label, icon, desc, count, color, bg }) => (
             <div key={slot} style={{
               display: "flex", alignItems: "center", gap: "9px",
               padding: "10px 16px", background: "var(--white)",
               border: "1px solid var(--border)", borderRadius: "10px", boxShadow: "var(--shadow-sm)",
             }}>
+              <span style={{ fontSize: "16px" }}>{icon}</span>
               <div>
                 <div style={{ fontSize: "12px", fontWeight: 700, color }}>{label}</div>
                 <div style={{ fontSize: "10px", color: "var(--ink-4)" }}>{desc} · {count} event{count !== 1 ? "s" : ""}</div>
@@ -143,8 +155,6 @@ const AfterHoursPage = () => {
           ))}
         </div>
       )}
-
-
 
       {loading ? (
         <div style={{ textAlign: "center", padding: "64px 0" }}>
@@ -155,12 +165,12 @@ const AfterHoursPage = () => {
         <EmptyState icon="🌙" title={search ? "No matches" : "No after-hours meetings"} subtitle={search ? "Try a different search term" : "Great — nothing scheduled outside your work hours."} />
       ) : (
         Object.entries(grouped).map(([slot, events]) => {
-          const meta = SLOTS[slot];
+          const meta = SLOTS[slot] ?? SLOTS.late; // fallback safety
           return (
             <div key={slot} style={{ marginBottom: "28px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
                 <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 10px", background: meta?.bg, color: meta?.color, borderRadius: "6px" }}>
-                  {meta?.label}
+                  {meta?.icon} {meta?.label}
                 </span>
                 <span style={{ fontSize: "11px", color: "var(--ink-4)" }}>{events.length}</span>
                 <div style={{ flex: 1, height: "1px", background: "var(--border)" }} />
