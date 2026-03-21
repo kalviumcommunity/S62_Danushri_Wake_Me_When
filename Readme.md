@@ -32,7 +32,7 @@ Professionals are overwhelmed with an ever-growing stream of meeting invites. Mo
 
 ---
 
-## Database Schema
+## 🗄️ Database Schema
 
 Three core collections power the application:
 
@@ -58,7 +58,7 @@ Entity relationships:
 
 ---
 
-## API Reference
+## 🔌 API Reference
 
 All routes are prefixed with `/api`. Protected routes require a valid JWT in the `Authorization: Bearer <token>` header.
 
@@ -89,7 +89,64 @@ All routes are prefixed with `/api`. Protected routes require a valid JWT in the
 | `PUT` | `/users/me` | Update working hours, keywords, alert preferences |
 | `POST` | `/users/upload` | Upload profile picture or attachment |
 
-> Full Bruno API collection is available in `/api-docs` in the repo.
+> Full Bruno API collection is available in `/bruno/Wake-Me-When/` in the repo.
+
+---
+
+## Bruno API Collection
+
+All API routes are documented using **[Bruno](https://www.usebruno.com/)** — an open-source API client. The collection lives in the repo so any developer can clone and test the API immediately without any additional setup.
+
+### Collection Structure
+
+```
+bruno/
+└── Wake-Me-When/
+    ├── bruno.json
+    ├── environments/
+    │   ├── local.bru          # http://localhost:5000
+    │   └── production.bru     # https://s62-danushri-wake-me-when-2-hvmd.onrender.com
+    ├── auth/
+    │   ├── register.bru
+    │   ├── login.bru
+    │   ├── logout.bru
+    │   ├── get-user.bru
+    │   └── verify-jwt.bru
+    ├── events/
+    │   ├── all-events.bru
+    │   ├── important-events.bru
+    │   ├── after-hours-events.bru
+    │   ├── overlap-events.bru
+    │   ├── mark-done.bru
+    │   └── resync.bru
+    ├── profile/
+    │   ├── get-stats.bru
+    │   ├── update-name.bru
+    │   ├── upload-photo.bru
+    │   └── delete-account.bru
+    ├── settings/
+    │   ├── get-settings.bru
+    │   └── save-settings.bru
+    └── push/
+        ├── get-vapid-key.bru
+        ├── subscribe.bru
+        └── test-push.bru
+```
+
+### How to Run Locally
+
+1. Download and install [Bruno](https://www.usebruno.com/downloads)
+2. Open Bruno → click **Open Collection** → select `bruno/Wake-Me-When/`
+3. Switch environment to **local** (top-right dropdown)
+4. Start your backend (`npm run dev` in `/Backend`)
+5. Run any request using the **▶ Send** button
+
+### How to Run Against Production
+
+1. Switch environment to **production** in Bruno
+2. Run `auth/login` first — copy the `token` from the response
+3. For protected routes, set the `Authorization` header to `Bearer <token>`
+4. All routes work against the live Render deployment with no local setup needed
 
 ---
 
@@ -104,19 +161,39 @@ The app supports two authentication methods:
 - Token expiry and refresh handled on the frontend
 
 ### Google OAuth (3rd Party)
-- Implemented via **Passport.js** with the Google strategy
-- Users can sign in with their Google account — no password required
-- On first login, a new user record is created automatically
-- Subsequent logins match on Google ID
-- User clicks "Sign in with Google" on the frontend
-- Browser redirects to GET /auth/google — Passport initiates the OAuth handshake with Google
-- Google prompts the user to select an account and grant permission
-- Google redirects back to GET /auth/google/callback with an authorization code
-- Passport exchanges the code for an access token and retrieves the user's Google profile
-- Server checks if a user with that Google ID already exists in MongoDB:
-- New user → record is created with name, email, and Google ID; JWT is issued
-- Returning user → existing record is matched on Google ID; JWT is issued
-- JWT is returned to the frontend and stored for subsequent API calls
+
+Google Sign-In is implemented using **Passport.js** with the `passport-google-oauth20` strategy.
+
+**Flow:**
+1. User clicks "Sign in with Google" on the frontend
+2. Browser redirects to `GET /auth/google` — Passport initiates the OAuth handshake with Google
+3. Google prompts the user to select an account and grant permission
+4. Google redirects back to `GET /auth/google/callback` with an authorization code
+5. Passport exchanges the code for an access token and retrieves the user's Google profile
+6. Server checks if a user with that Google ID already exists in MongoDB:
+   - **New user** → record is created with name, email, and Google ID; JWT is issued
+   - **Returning user** → existing record is matched on Google ID; JWT is issued
+7. JWT is returned to the frontend and stored for subsequent API calls
+
+**Setup (environment variables required):**
+```env
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_CALLBACK_URL=https://your-backend.onrender.com/api/auth/google/callback
+```
+
+> To obtain credentials, create a project in [Google Cloud Console](https://console.cloud.google.com/), enable the **Google+ API / People API**, and add your callback URL to the list of authorised redirect URIs.
+
+**Key implementation files:**
+```
+server/
+├── config/
+│   └── passport.js        # Google strategy configuration
+├── routes/
+│   └── auth.js            # /auth/google and /auth/google/callback routes
+└── models/
+    └── User.js            # googleId field on the User schema
+```
 
 ---
 
@@ -228,7 +305,6 @@ npm run dev
 ```
 
 ---
-
 **Frontend:** [wakemewhenn.netlify.app](https://wakemewhenn.netlify.app/)  
 **Backend:** [s62-danushri-wake-me-when-2-hvmd.onrender.com](https://s62-danushri-wake-me-when-2-hvmd.onrender.com)  
 **Figma HiFi:** [View Design](https://www.figma.com/design/6R1dstmbMXIjf1bri60CGc/html.to.design-%E2%80%94-by-%E2%80%B9div%E2%80%BARIOTS-%E2%80%94-Import-websites-to-Figma-designs--web-html-css---Community-?node-id=0-1&t=wfpBTddXWdgrxnvF-1)  
