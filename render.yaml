@@ -6,7 +6,7 @@ services:
     startCommand: npm start
     envVars:
       - key: MONGODB_URI
-        value: mongodb+srv://danushriprakashsaranya:ChUyqg6MbrcmTbZZ@cluster1.m6tjv.mongodb.net/wakeme
+        sync: false   # set MONGODB_URI in the Render dashboard; never commit it
     rootDir: .
 
   - type: web

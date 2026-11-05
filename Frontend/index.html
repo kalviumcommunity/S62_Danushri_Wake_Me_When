@@ -2,12 +2,37 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" href="/logo.jpg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    <title>Wake Me When – Only get alerted for the meetings that need you</title>
+    <meta name="description" content="Wake Me When connects to your Google Calendar with read-only access, filters out meetings that don't need you, and reminds you only about the important ones." />
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      Static fallback: visible to crawlers (including Google's OAuth verification) and to users
+      without JavaScript. React's createRoot replaces this content once the app loads.
+    -->
+    <div id="root">
+      <main style="max-width:760px;margin:40px auto;padding:0 20px;font-family:system-ui,sans-serif;line-height:1.7;color:#1f2937">
+        <h1>Wake Me When</h1>
+        <p><strong>Not every meeting deserves to wake you.</strong></p>
+        <p>
+          Wake Me When is a web app that connects to your Google Calendar (and optionally Outlook) with
+          <strong>read-only</strong> access. It checks your upcoming events against rules you set, such as your
+          working hours, keywords like "urgent", and whether you are a required attendee. It then shows and reminds
+          you only about the meetings that genuinely need you, by email or browser notification.
+        </p>
+        <h2>How Wake Me When uses your Google data</h2>
+        <p>
+          We use Google Sign-In to create your account, and the Google Calendar read-only scope to read event titles,
+          times, and attendees so we can identify important meetings and send reminders. We never modify your calendar,
+          never sell your data, and never use it for advertising. See our
+          <a href="/privacy.html">Privacy Policy</a> for full details.
+        </p>
+        <p><a href="/signup">Get started</a> · <a href="/login">Log in</a></p>
+        <p><a href="/privacy.html">Privacy Policy</a> · <a href="/terms.html">Terms of Service</a></p>
+      </main>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -1,8 +1,10 @@
 import axios from "axios";
 
-const BACKEND = window.location.hostname === "localhost"
-  ? "http://localhost:5000"
-  : "https://s62-danushri-wake-me-when-2-hvmd.onrender.com";
+// Set VITE_API_URL (e.g. in Netlify env vars) to point at your backend domain.
+export const BACKEND = import.meta.env.VITE_API_URL
+  || (window.location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : "https://s62-danushri-wake-me-when-2-hvmd.onrender.com");
 
 const API = axios.create({
   baseURL: BACKEND,

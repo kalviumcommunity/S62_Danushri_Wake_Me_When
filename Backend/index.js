@@ -99,6 +99,11 @@ passport.serializeUser((user, done)   => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
 
 // ── Auth middleware ────────────────────────────────────────────────────────────
+// Debug routes are disabled in production unless ENABLE_DEBUG_ROUTES=true.
+const debugOnly = (req, res, next) => {
+  if (isProd && process.env.ENABLE_DEBUG_ROUTES !== "true") return res.status(404).end();
+  next();
+};
 const ensureAuth = (req, res, next) => {
   if (req.user || req.session?.emailUser) return next();
   res.status(401).json({ error: "Not authenticated" });
@@ -190,7 +195,11 @@ async function sendAlertEmail(toEmail, event, minutesBefore) {
 }
 
 async function notifyAdminNewUser({ name, email, method }) {
-  const adminEmail = "danushri.prakashsaranya@gmail.com";
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) {
+    console.warn("⚠️  ADMIN_EMAIL not set — skipping admin notification");
+    return;
+  }
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return;
   const signedUpAt = new Date().toLocaleString("en-US", {
     weekday:"short", month:"short", day:"numeric",
@@ -871,7 +880,7 @@ app.get("/api/overlap-events", ensureAuth, async (req, res) => {
 });
 
 // ── Debug routes ───────────────────────────────────────────────────────────────
-app.get("/api/debug/me", ensureAuth, async (req, res) => {
+app.get("/api/debug/me", debugOnly, ensureAuth, async (req, res) => {
   const email = getUserEmail(req);
   const id = req.session?.emailUser?.id;
   const dbUser = id ? await User.findById(id).lean() : await User.findOne({ email }).lean();
@@ -881,7 +890,7 @@ app.get("/api/debug/me", ensureAuth, async (req, res) => {
   });
 });
 
-app.get("/api/debug/important-raw", ensureAuth, async (req, res) => {
+app.get("/api/debug/important-raw", debugOnly, ensureAuth, async (req, res) => {
   const email = getUserEmail(req);
   const all = await ImportantEvent.find({ email }).lean();
   res.json({ count: all.length, events: all.map(e => ({
@@ -891,21 +900,21 @@ app.get("/api/debug/important-raw", ensureAuth, async (req, res) => {
   }))});
 });
 
-app.get("/api/debug/send-raw-email", async (req, res) => {
+app.get("/api/debug/send-raw-email", debugOnly, async (req, res) => {
   const user = process.env.EMAIL_USER;
   const pass = process.env.EMAIL_PASS;
   if (!user || !pass) return res.status(500).json({ error: "EMAIL_USER or EMAIL_PASS not set in .env" });
   try {
     const nodemailer = (await import("nodemailer")).default;
     const t = nodemailer.createTransport({ service: "gmail", auth: { user, pass } });
-    await t.sendMail({ from: user, to: "danushri.prakashsaranya@gmail.com", subject: "WMW test email", text: "If you got this, email is working." });
-    res.json({ ok: true, from: user, to: "danushri.prakashsaranya@gmail.com" });
+    await t.sendMail({ from: user, to: process.env.ADMIN_EMAIL || user, subject: "WMW test email", text: "If you got this, email is working." });
+    res.json({ ok: true, from: user, to: process.env.ADMIN_EMAIL || user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.get("/api/debug/test-admin-email", async (req, res) => {
+app.get("/api/debug/test-admin-email", debugOnly, async (req, res) => {
   try {
     await notifyAdminNewUser({ name: "Test User", email: "test@example.com", method: "Debug Test" });
     res.json({ ok: true, sentTo: process.env.ADMIN_EMAIL || process.env.EMAIL_USER || "none" });
@@ -947,7 +956,7 @@ app.post("/api/test-email", ensureAuth, async (req, res) => {
 // ── Outlook OAuth ──────────────────────────────────────────────────────────────
 const AZURE_CLIENT_ID     = process.env.AZURE_CLIENT_ID;
 const AZURE_CLIENT_SECRET = process.env.AZURE_CLIENT_SECRET;
-const AZURE_REDIRECT_URI  = "http://localhost:5000/api/auth/outlook/callback";
+const AZURE_REDIRECT_URI = process.env.OUTLOOK_REDIRECT_URI || "http://localhost:5000/api/auth/outlook/callback";
 const MS_SCOPES           = "openid profile email offline_access Calendars.Read User.Read";
 
 app.get("/api/auth/outlook", (req, res) => {

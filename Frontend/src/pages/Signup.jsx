@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { UserPlus, Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
-import API from "../lib/api";
+import API, { BACKEND } from "../lib/api";
 
 const rules = [
   { id:"len",   label:"At least 8 characters",    test: p => p.length >= 8 },
@@ -9,9 +9,6 @@ const rules = [
   { id:"num",   label:"One number",               test: p => /[0-9]/.test(p) },
 ];
 
-const BACKEND = window.location.hostname === "localhost"
-  ? "http://localhost:5000"
-  : "https://s62-danushri-wake-me-when-2-hvmd.onrender.com";
 
 export default function Signup() {
   const navigate = useNavigate();
