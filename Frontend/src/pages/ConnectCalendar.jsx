@@ -1,9 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { BACKEND } from "../lib/api";
 
-const BACKEND = window.location.hostname === "localhost"
-  ? "http://localhost:5000"
-  : "https://s62-danushri-wake-me-when-2-hvmd.onrender.com";
 
 export default function ConnectCalendar() {
   return (

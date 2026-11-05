@@ -1,11 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LogIn, Eye, EyeOff, AlertCircle } from "lucide-react";
-import API from "../lib/api";
+import API, { BACKEND } from "../lib/api";
 
-const BACKEND = window.location.hostname === "localhost"
-  ? "http://localhost:5000"
-  : "https://s62-danushri-wake-me-when-2-hvmd.onrender.com";
 
 export default function Login() {
   const navigate   = useNavigate();

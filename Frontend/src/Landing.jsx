@@ -283,7 +283,7 @@ function LoginScreen() {
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"16px",maxWidth:"1100px",margin:"0 auto"}}>
             {[
               {icon:"📅",bg:"rgba(240,253,250,.9)",border:"rgba(5,150,105,.2)",title:"Calendar sync",   desc:"Connects to Google Calendar and monitors every event in real time, 24/7."},
-              {icon:"🤖",bg:"rgba(245,243,255,.9)",border:"rgba(139,92,246,.2)",title:"AI triage",       desc:"Scans meeting title, attendees and context to decide if you're truly needed."},
+              {icon:"🤖",bg:"rgba(245,243,255,.9)",border:"rgba(139,92,246,.2)",title:"Smart triage",    desc:"Checks meeting title, attendees and your rules to decide if you're truly needed."},
               {icon:"🔔",bg:"rgba(240,249,255,.9)",border:"rgba(124,58,237,.2)", title:"Smart alerts",    desc:"Only notifies you when a meeting matches your rules — all noise suppressed."},
               {icon:"⚙️",bg:"rgba(255,251,235,.9)",border:"rgba(245,158,11,.2)",title:"Custom rules",    desc:"Set keywords, work hours, attendee filters and urgency thresholds your way."},
             ].map(({icon,bg,border,title,desc})=>(
@@ -383,6 +383,10 @@ function LoginScreen() {
             <p style={{fontSize:"14px",color:"#64748b",lineHeight:1.8,marginBottom:"28px"}}>Connect your Google Calendar, set your preferences once, and let Wake Me When do the filtering. You'll only hear from us when it actually matters.</p>
             <a href="/signup" className="cta-primary" style={{display:"inline-flex",alignItems:"center",padding:"14px 38px",borderRadius:"13px",color:"#fff",fontSize:"15px",fontWeight:600,textDecoration:"none",background:"linear-gradient(135deg,#0d9488,#0891b2)",boxShadow:"0 8px 28px rgba(13,148,136,.32)",transition:"filter .2s"}}>Connect my calendar →</a>
             <p style={{fontSize:"11px",color:"#cbd5e1",marginTop:"14px"}}>Free to use · Google Calendar required</p>
+            <p style={{fontSize:"11px",color:"#94a3b8",marginTop:"8px",lineHeight:1.7}}>
+              We request read-only Google Calendar access only to find your important meetings and remind you about them.
+              We never modify your calendar, sell your data, or use it for ads. <a href="/privacy.html" style={{color:"#0d9488"}}>Privacy Policy</a>
+            </p>
           </div>
         </section>
 
@@ -392,7 +396,11 @@ function LoginScreen() {
             <img src="/logo.jpg" alt="WMW" style={{width:"24px",height:"24px",borderRadius:"6px",objectFit:"cover"}}/>
             <span style={{fontSize:"12px",color:"#94a3b8"}}>Wake Me When</span>
           </div>
-          <span style={{fontSize:"11px",color:"#cbd5e1"}}>Your time, your rules.</span>
+          <div style={{display:"flex",alignItems:"center",gap:"16px",fontSize:"12px"}}>
+            <a href="/privacy.html" style={{color:"#64748b",textDecoration:"none"}}>Privacy Policy</a>
+            <a href="/terms.html" style={{color:"#64748b",textDecoration:"none"}}>Terms of Service</a>
+            <span style={{fontSize:"11px",color:"#cbd5e1"}}>Your time, your rules.</span>
+          </div>
         </footer>
 
       </div>
